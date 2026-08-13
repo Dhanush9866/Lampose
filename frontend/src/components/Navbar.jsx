@@ -1,64 +1,52 @@
 import React from 'react';
 import { PlusCircle, LayoutGrid } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, counts = {} }) {
+export default function Navbar({ activeTab, setActiveTab }) {
   return (
     <header className="site-header" style={{
       position: 'sticky',
       top: 0,
       zIndex: 100,
-      background: 'rgba(25, 64, 44, 0.96)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.12)'
+      background: '#2a593e',
+      borderBottom: 'none'
     }}>
-      <div className="container header-content">
-        {/* Brand Logo - Lampose */}
+      <div className="header-container header-content">
+        {/* Brand Logo - Lampose enlarged */}
         <div 
           onClick={() => setActiveTab('listings')}
           className="brand-logo"
-          style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             <span style={{
               fontFamily: "'Outfit', 'Inter', sans-serif",
-              fontSize: '1.6rem',
+              fontSize: '1.95rem',
               fontWeight: 800,
-              color: '#ffffff',
+              color: '#F9F7F2',
               letterSpacing: '-0.02em'
             }}>
               Lam
             </span>
             <span style={{
               fontFamily: "'Outfit', 'Inter', sans-serif",
-              fontSize: '1.6rem',
+              fontSize: '1.95rem',
               fontWeight: 800,
-              color: '#e57e33',
-              letterSpacing: '-0.02em',
-              position: 'relative'
+              color: '#D8993E',
+              letterSpacing: '-0.02em'
             }}>
               pose
-              <span style={{
-                position: 'absolute',
-                top: '3px',
-                right: '3px',
-                width: '4px',
-                height: '4px',
-                borderRadius: '50%',
-                background: '#4ade80'
-              }} />
             </span>
           </div>
 
-          {/* Subtitle Badge - Desktop / Tablet only */}
+          {/* Subtitle Badge */}
           <span className="portal-badge" style={{
-            fontSize: '0.62rem',
+            fontSize: '0.65rem',
             fontWeight: 700,
-            padding: '2px 7px',
+            padding: '3px 9px',
             borderRadius: '10px',
-            background: 'rgba(229, 126, 51, 0.2)',
-            color: '#fca966',
-            border: '1px solid rgba(229, 126, 51, 0.4)',
+            background: 'rgba(216, 153, 62, 0.2)',
+            color: '#f5b963',
+            border: '1px solid rgba(216, 153, 62, 0.4)',
             letterSpacing: '0.04em',
             whiteSpace: 'nowrap'
           }}>
@@ -66,21 +54,14 @@ export default function Navbar({ activeTab, setActiveTab, counts = {} }) {
           </span>
         </div>
 
-        {/* Category Stats Badges - Desktop Only to prevent mobile clutter */}
-        <div className="desktop-stats-badges">
-          <span className="badge badge-pg">PG: {counts.PG || 0}</span>
-          <span className="badge badge-hostel">Hostel: {counts.Hostel || 0}</span>
-          <span className="badge badge-dormitory">Dorm: {counts.Dormitory || 0}</span>
-          <span className="badge badge-bachelor">Bachelor: {counts['Bachelor Room'] || 0}</span>
-        </div>
-
-        {/* Navigation Action Buttons - Sleek Pill Tabs */}
-        <div className="header-nav">
+        {/* Navigation Action Buttons enlarged */}
+        <div className="header-nav" style={{ gap: '12px' }}>
           <button
             onClick={() => setActiveTab('listings')}
             className={`btn nav-btn ${activeTab === 'listings' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ padding: '10px 22px', fontSize: '0.92rem' }}
           >
-            <LayoutGrid size={15} />
+            <LayoutGrid size={17} />
             <span>Explore</span>
           </button>
 
@@ -88,11 +69,13 @@ export default function Navbar({ activeTab, setActiveTab, counts = {} }) {
             onClick={() => setActiveTab('onboard')}
             className={`btn nav-btn ${activeTab === 'onboard' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ 
-              background: activeTab === 'onboard' ? '#e57e33' : 'rgba(255, 255, 255, 0.12)',
+              padding: '10px 22px',
+              fontSize: '0.92rem',
+              background: activeTab === 'onboard' ? '#D8993E' : 'rgba(255, 255, 255, 0.12)',
               color: '#ffffff'
             }}
           >
-            <PlusCircle size={15} />
+            <PlusCircle size={17} />
             <span>Onboard</span>
           </button>
         </div>

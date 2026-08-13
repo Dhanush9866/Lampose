@@ -1,100 +1,109 @@
 import React from 'react';
-import { CheckCircle2, ArrowRight, PlusCircle, Building2 } from 'lucide-react';
+import { CheckCircle2, ArrowRight, PlusCircle, Building2, MapPin, User, Phone } from 'lucide-react';
 
 export default function FormSuccessModal({ property, onViewListings, onResetForm }) {
   if (!property) return null;
+
+  const { name, place, ownerName, ownerMobile, category, rent, dailyPrice, monthlyPrice, stayType } = property;
+  const displayPrice = rent || monthlyPrice || dailyPrice || 0;
 
   return (
     <div style={{
       position: 'fixed',
       inset: 0,
-      zIndex: 200,
-      background: 'rgba(5, 8, 15, 0.85)',
+      zIndex: 300,
+      background: 'rgba(18, 42, 29, 0.88)',
       backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '20px'
+      padding: '16px'
     }} className="animate-fade-in">
       <div className="glass-card" style={{
         maxWidth: '520px',
         width: '100%',
-        padding: '32px',
+        padding: '32px 24px',
         textAlign: 'center',
-        background: 'linear-gradient(135deg, rgba(20, 30, 50, 0.95) 0%, rgba(10, 16, 30, 0.95) 100%)',
-        border: '1px solid rgba(16, 185, 129, 0.4)'
+        background: '#2A593E',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid rgba(216, 153, 62, 0.4)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
       }}>
-        {/* Success Icon */}
+        {/* Success Animated Badge */}
         <div style={{
-          width: '72px',
-          height: '72px',
+          width: '64px',
+          height: '64px',
           borderRadius: '50%',
-          background: 'rgba(16, 185, 129, 0.15)',
-          color: '#10b981',
+          background: 'rgba(216, 153, 62, 0.18)',
+          border: '2px solid #D8993E',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          margin: '0 auto 20px',
-          border: '2px solid rgba(16, 185, 129, 0.4)',
-          boxShadow: '0 0 30px rgba(16, 185, 129, 0.3)'
+          margin: '0 auto 16px',
+          color: '#D8993E'
         }}>
-          <CheckCircle2 size={40} />
+          <CheckCircle2 size={36} />
         </div>
 
-        <span className={`badge ${
-          property.category === 'PG' ? 'badge-pg' :
-          property.category === 'Hostel' ? 'badge-hostel' :
-          property.category === 'Dormitory' ? 'badge-dormitory' : 'badge-bachelor'
-        }`} style={{ marginBottom: '12px' }}>
-          {property.category} Onboarded!
-        </span>
-
-        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ffffff', marginBottom: '8px' }}>
-          {property.name}
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ffffff', marginBottom: '6px' }}>
+          Property Onboarded Successfully!
         </h2>
-
-        <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '24px' }}>
-          Successfully stored in database! Owner <strong style={{ color: '#ffffff' }}>{property.ownerName}</strong> ({property.ownerMobile}) is now listed for <strong style={{ color: '#ffffff' }}>{property.place}</strong>.
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-sub)', marginBottom: '20px' }}>
+          Your accommodation listing has been saved directly to MongoDB Atlas and is now live!
         </p>
 
+        {/* Property Brief Summary Box */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.04)',
           padding: '16px',
-          borderRadius: 'var(--radius-sm)',
+          borderRadius: 'var(--radius-md)',
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid var(--border-glass)',
           textAlign: 'left',
-          marginBottom: '28px',
-          fontSize: '0.875rem'
+          marginBottom: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Rent:</span>
-            <span style={{ color: '#34d399', fontWeight: 700 }}>₹{property.rent}</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#D8993E', color: '#ffffff' }}>
+              {category} • {stayType || 'Onboarded'}
+            </span>
+            <span style={{ fontSize: '1rem', fontWeight: 800, color: '#D8993E' }}>
+              ₹{displayPrice} {stayType === 'Short Stay' ? '/day' : '/mo'}
+            </span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Location:</span>
-            <span style={{ color: '#ffffff' }}>{property.place}</span>
+
+          <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff' }}>{name}</h4>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: 'var(--text-sub)' }}>
+            <MapPin size={14} color="#D8993E" />
+            <span>{place}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Owner Contact:</span>
-            <span style={{ color: '#a5b4fc' }}>{property.ownerMobile}</span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <span><strong style={{ color: '#ffffff' }}>Owner:</strong> {ownerName}</span>
+            <span><strong style={{ color: '#ffffff' }}>Contact:</strong> {ownerMobile}</span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+        {/* Modal Buttons */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
           <button
             onClick={onViewListings}
             className="btn btn-primary"
-            style={{ flex: 1, padding: '12px 18px' }}
+            style={{ padding: '12px 24px', background: '#D8993E' }}
           >
-            <span>View All Listings</span>
-            <ArrowRight size={18} />
+            <span>View Live Listings</span>
+            <ArrowRight size={16} />
           </button>
 
           <button
             onClick={onResetForm}
             className="btn btn-secondary"
-            style={{ flex: 1, padding: '12px 18px' }}
+            style={{ padding: '12px 20px' }}
           >
-            <PlusCircle size={18} />
+            <PlusCircle size={16} />
             <span>Onboard Another</span>
           </button>
         </div>
