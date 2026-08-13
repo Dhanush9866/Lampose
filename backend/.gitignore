@@ -1,0 +1,8 @@
+# Backend Node dependencies
+node_modules/
+
+# Secrets
+.env
+
+# Logs
+*.log
