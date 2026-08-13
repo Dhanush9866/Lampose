@@ -213,70 +213,73 @@ export default function App() {
           {/* ==================================================== */}
           {activeTab === 'listings' && (
             <div>
-              {/* Interactive Auto-Rotating Hero Carousel Slider */}
+              {/* Interactive Auto-Rotating Hero Carousel Slider - NO GRID LINES BEHIND HERO */}
               <HeroSlider onOnboardClick={() => setActiveTab('onboard')} />
 
-              {/* Filter & Search Bar */}
-              <FilterBar
-                selectedCategory={selectedCategory}
-                onCategoryChange={setSelectedCategory}
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                totalCount={filteredProperties.length}
-              />
+              {/* GRID LINES PATTERN STARTS STRICTLY BELOW HERO SECTION */}
+              <div className="grid-lines-below-hero">
+                {/* Filter & Search Bar */}
+                <FilterBar
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={setSelectedCategory}
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  totalCount={filteredProperties.length}
+                />
 
-              {/* Error Message */}
-              {errorMsg && (
-                <div style={{
-                  padding: '14px 16px',
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'rgba(244, 63, 94, 0.15)',
-                  border: '1px solid rgba(244, 63, 94, 0.3)',
-                  color: '#f43f5e',
-                  marginBottom: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '0.9rem'
-                }}>
-                  <AlertCircle size={18} />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
+                {/* Error Message */}
+                {errorMsg && (
+                  <div style={{
+                    padding: '14px 16px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'rgba(244, 63, 94, 0.15)',
+                    border: '1px solid rgba(244, 63, 94, 0.3)',
+                    color: '#f43f5e',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '0.9rem'
+                  }}>
+                    <AlertCircle size={18} />
+                    <span>{errorMsg}</span>
+                  </div>
+                )}
 
-              {/* Loading Spinner */}
-              {loading ? (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-                  <div style={{ fontSize: '1rem', marginBottom: '8px' }}>Loading Lampose properties...</div>
-                </div>
-              ) : filteredProperties.length === 0 ? (
-                <div className="glass-card" style={{ textAlign: 'center', padding: '40px 20px' }}>
-                  <Building2 size={40} color="var(--lampose-gold)" style={{ margin: '0 auto 12px' }} />
-                  <h3 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '6px' }}>No Properties Found</h3>
-                  <p style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '0.88rem' }}>
-                    No accommodations matched your search or category filter. Try clearing filters or onboard a new property!
-                  </p>
-                  <button onClick={() => setActiveTab('onboard')} className="btn btn-primary">
-                    <PlusCircle size={16} />
-                    <span>Onboard Property Now</span>
-                  </button>
-                </div>
-              ) : (
-                /* Properties Grid Display */
-                <div className="property-grid" style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                  gap: '18px'
-                }}>
-                  {filteredProperties.map(property => (
-                    <PropertyCard
-                      key={property._id}
-                      property={property}
-                      onViewDetails={(p) => setActiveModalProperty(p)}
-                    />
-                  ))}
-                </div>
-              )}
+                {/* Loading Spinner */}
+                {loading ? (
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: '1rem', marginBottom: '8px' }}>Loading Lampose properties...</div>
+                  </div>
+                ) : filteredProperties.length === 0 ? (
+                  <div className="glass-card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+                    <Building2 size={40} color="var(--lampose-gold)" style={{ margin: '0 auto 12px' }} />
+                    <h3 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '6px' }}>No Properties Found</h3>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '0.88rem' }}>
+                      No accommodations matched your search or category filter. Try clearing filters or onboard a new property!
+                    </p>
+                    <button onClick={() => setActiveTab('onboard')} className="btn btn-primary">
+                      <PlusCircle size={16} />
+                      <span>Onboard Property Now</span>
+                    </button>
+                  </div>
+                ) : (
+                  /* Properties Grid Display */
+                  <div className="property-grid" style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                    gap: '18px'
+                  }}>
+                    {filteredProperties.map(property => (
+                      <PropertyCard
+                        key={property._id}
+                        property={property}
+                        onViewDetails={(p) => setActiveModalProperty(p)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -293,7 +296,7 @@ export default function App() {
                 background: 'rgba(255, 255, 255, 0.08)',
                 border: '1px solid var(--border-gold)'
               }}>
-                <span className="badge badge-pg" style={{ marginBottom: '6px', background: 'rgba(229, 126, 51, 0.25)', color: '#fca966', borderColor: 'rgba(229, 126, 51, 0.5)' }}>
+                <span className="badge badge-pg" style={{ marginBottom: '6px', background: 'rgba(216, 153, 62, 0.25)', color: '#f5b963', borderColor: 'rgba(216, 153, 62, 0.5)' }}>
                   LAMPOSE ONBOARDING PORTAL
                 </span>
                 <h1 style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 800, color: '#ffffff', marginBottom: '4px' }}>

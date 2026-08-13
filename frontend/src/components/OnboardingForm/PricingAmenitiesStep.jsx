@@ -52,7 +52,7 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
   return (
     <div className="animate-fade-in" style={{ marginBottom: '28px' }}>
       <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <IndianRupee size={20} color="#e57e33" />
+        <IndianRupee size={20} color="#D8993E" />
         <span>3. Stay Duration, Pricing & Amenities</span>
       </h3>
 
@@ -75,7 +75,7 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
           <button
             type="button"
             className={`btn ${isShortStay ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '12px 16px', fontSize: '0.9rem' }}
+            style={{ padding: '12px 16px', fontSize: '0.9rem', background: isShortStay ? '#D8993E' : 'rgba(255,255,255,0.1)' }}
             onClick={() => setStayType('Short Stay')}
           >
             <Clock size={16} />
@@ -85,7 +85,7 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
           <button
             type="button"
             className={`btn ${isLongStay ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '12px 16px', fontSize: '0.9rem' }}
+            style={{ padding: '12px 16px', fontSize: '0.9rem', background: isLongStay ? '#D8993E' : 'rgba(255,255,255,0.1)' }}
             onClick={() => setStayType('Long Stay')}
           >
             <Calendar size={16} />
@@ -98,10 +98,10 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
           <div className="animate-fade-in" style={{
             padding: '16px',
             borderRadius: 'var(--radius-sm)',
-            background: 'rgba(229, 126, 51, 0.12)',
-            border: '1px solid rgba(229, 126, 51, 0.3)'
+            background: 'rgba(216, 153, 62, 0.15)',
+            border: '1px solid rgba(216, 153, 62, 0.35)'
           }}>
-            <h4 style={{ fontSize: '0.92rem', color: '#fca966', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <h4 style={{ fontSize: '0.92rem', color: '#f7c784', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Clock size={16} />
               <span>Short Stay Configuration (1 - 7 Days)</span>
             </h4>
@@ -149,11 +149,11 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
           <div className="animate-fade-in" style={{
             padding: '16px',
             borderRadius: 'var(--radius-sm)',
-            background: 'rgba(35, 88, 59, 0.25)',
+            background: 'rgba(42, 89, 62, 0.25)',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             <h4 style={{ fontSize: '0.92rem', color: '#ffffff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Calendar size={16} color="#e57e33" />
+              <Calendar size={16} color="#D8993E" />
               <span>Long Stay Configuration (Starting from 1 Month)</span>
             </h4>
 
@@ -252,7 +252,7 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
                 style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '12px' }}
                 onClick={() => onChange({ target: { name: 'imageUrl', value: img.url } })}
               >
-                <Sparkles size={12} />
+                <Sparkles size={12} color="#D8993E" />
                 {img.label}
               </button>
             ))}
@@ -288,8 +288,8 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
                 style={{
                   padding: '8px 12px',
                   borderRadius: 'var(--radius-sm)',
-                  background: isChecked ? 'rgba(229, 126, 51, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                  border: isChecked ? '1px solid #e57e33' : '1px solid var(--border-glass)',
+                  background: isChecked ? 'rgba(216, 153, 62, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  border: isChecked ? '1px solid #D8993E' : '1px solid var(--border-glass)',
                   color: isChecked ? '#ffffff' : 'var(--text-sub)',
                   cursor: 'pointer',
                   fontSize: '0.82rem',
@@ -303,7 +303,7 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
                   width: '16px',
                   height: '16px',
                   borderRadius: '4px',
-                  background: isChecked ? '#e57e33' : 'rgba(255,255,255,0.1)',
+                  background: isChecked ? '#D8993E' : 'rgba(255,255,255,0.1)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'

@@ -10,12 +10,12 @@ const SLIDES = [
     subtitle: "Top hostels, verified PGs & bachelor flats — ",
     subtitleHighlight: "all in one place.",
     buttonText: "Onboard Property",
-    bgGradient: "linear-gradient(135deg, rgba(35, 88, 59, 0.95) 0%, rgba(19, 45, 30, 0.95) 100%)",
     image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80",
+    imageBadge: "100% Verified PGs",
     features: [
-      { icon: MapPin, title: "Top Locations", sub: "Near You" },
-      { icon: ShieldCheck, title: "Verified Partners", sub: "You Can Trust" },
-      { icon: Heart, title: "Great Reviews", sub: "Happy Customers" }
+      { icon: MapPin, title: "Top Locations", sub: "Near You", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" },
+      { icon: ShieldCheck, title: "Verified Partners", sub: "You Can Trust", color: "#2A593E", bg: "rgba(42, 89, 62, 0.12)" },
+      { icon: Heart, title: "Great Reviews", sub: "Happy Customers", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" }
     ]
   },
   {
@@ -26,12 +26,12 @@ const SLIDES = [
     subtitle: "List daily stays (1-7 days) or monthly accommodation — ",
     subtitleHighlight: "direct to tenants.",
     buttonText: "Onboard Short / Long Stay",
-    bgGradient: "linear-gradient(135deg, rgba(229, 126, 51, 0.95) 0%, rgba(150, 70, 20, 0.95) 100%)",
     image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
+    imageBadge: "Daily & Monthly Rates",
     features: [
-      { icon: Clock, title: "1 - 7 Days", sub: "Short Stay Rate" },
-      { icon: Calendar, title: "1 Month+", sub: "Monthly Rent" },
-      { icon: Sparkles, title: "0% Brokerage", sub: "Direct Enquiries" }
+      { icon: Clock, title: "1 - 7 Days", sub: "Short Stay Rate", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" },
+      { icon: Calendar, title: "1 Month+", sub: "Monthly Rent", color: "#2A593E", bg: "rgba(42, 89, 62, 0.12)" },
+      { icon: Sparkles, title: "0% Brokerage", sub: "Direct Enquiries", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" }
     ]
   },
   {
@@ -42,12 +42,12 @@ const SLIDES = [
     subtitle: "Join thousands of PG, Hostel, Dormitory & Bachelor Flat owners — ",
     subtitleHighlight: "fill details & go live instantly.",
     buttonText: "Start Onboarding Now",
-    bgGradient: "linear-gradient(135deg, rgba(25, 60, 42, 0.95) 0%, rgba(229, 126, 51, 0.9) 100%)",
     image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+    imageBadge: "Instant Listing",
     features: [
-      { icon: ShieldCheck, title: "Verified Owners", sub: "Trusted Platform" },
-      { icon: Sparkles, title: "Fast Onboarding", sub: "Live in Minutes" },
-      { icon: MapPin, title: "PAN India", sub: "Major Cities" }
+      { icon: ShieldCheck, title: "Verified Owners", sub: "Trusted Platform", color: "#2A593E", bg: "rgba(42, 89, 62, 0.12)" },
+      { icon: Sparkles, title: "Fast Onboarding", sub: "Live in Minutes", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" },
+      { icon: MapPin, title: "PAN India", sub: "Major Cities", color: "#2A593E", bg: "rgba(42, 89, 62, 0.12)" }
     ]
   }
 ];
@@ -56,7 +56,7 @@ export default function HeroSlider({ onOnboardClick }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Auto rotate slides every 5 seconds
+  // Auto rotate slides smoothly every 5 seconds
   useEffect(() => {
     if (isPaused) return;
     const interval = setInterval(() => {
@@ -65,166 +65,213 @@ export default function HeroSlider({ onOnboardClick }) {
     return () => clearInterval(interval);
   }, [isPaused]);
 
-  const slide = SLIDES[currentIndex];
-
   return (
     <div 
-      className="hero-slider-container"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      className="hero-slider-wrapper"
       style={{
-        position: 'relative',
+        background: '#2a593e', /* Solid background blocking grid lines behind hero section */
         borderRadius: '24px',
-        overflow: 'hidden',
-        marginBottom: '24px',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
-        border: '1px solid rgba(255, 255, 255, 0.15)'
+        padding: '2px',
+        marginBottom: '24px'
       }}
     >
-      {/* Slide Item Container */}
       <div 
-        key={slide.id}
-        className="animate-fade-in"
+        className="hero-slider-container"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
         style={{
-          background: slide.bgGradient,
-          padding: '32px 36px',
-          minHeight: '260px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
           position: 'relative',
-          transition: 'all 0.5s ease'
+          borderRadius: '24px',
+          overflow: 'hidden',
+          background: '#ffffff',
+          boxShadow: '0 20px 48px rgba(0, 0, 0, 0.28)',
+          border: '1px solid rgba(0, 0, 0, 0.08)'
         }}
       >
-        {/* Background Image Overlay */}
+        {/* Sliding Track - Smooth horizontal slide left */}
         <div style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: '50%',
-          overflow: 'hidden',
-          opacity: 0.2,
-          maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, transparent 100%)',
-          pointerEvents: 'none'
+          display: 'flex',
+          width: `${SLIDES.length * 100}%`,
+          transform: `translateX(-${currentIndex * (100 / SLIDES.length)}%)`,
+          transition: 'transform 0.75s cubic-bezier(0.25, 1, 0.5, 1)',
+          willChange: 'transform'
         }}>
-          <img src={slide.image} alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-
-        {/* Top Tag & Main Title */}
-        <div style={{ position: 'relative', zIndex: 2 }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'rgba(255, 255, 255, 0.15)',
-            padding: '4px 12px',
-            borderRadius: '16px',
-            marginBottom: '12px'
-          }}>
-            <Sparkles size={12} color="#ffffff" />
-            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#ffffff', letterSpacing: '0.04em' }}>
-              {slide.tag}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-            <div style={{ maxWidth: '640px' }}>
-              <h2 className="hero-slider-title" style={{ fontSize: 'clamp(1.5rem, 4.5vw, 2.3rem)', fontWeight: 800, color: '#ffffff', lineHeight: '1.2' }}>
-                {slide.title}
-                <span style={{ color: slide.id === 2 ? '#ffffff' : '#e57e33' }}>{slide.titleHighlight}</span>
-              </h2>
-
-              <p className="hero-slider-sub" style={{ fontSize: '0.92rem', color: 'var(--text-sub)', marginTop: '6px' }}>
-                {slide.subtitle}
-                <strong style={{ color: '#ffffff' }}>{slide.subtitleHighlight}</strong>
-              </p>
-            </div>
-
-            <button 
-              onClick={onOnboardClick}
-              className="btn btn-primary hero-slider-btn"
+          {SLIDES.map((slide) => (
+            <div 
+              key={slide.id}
               style={{
-                padding: '12px 26px',
-                fontSize: '0.9rem',
-                flexShrink: 0,
-                background: '#e57e33',
-                color: '#ffffff',
-                boxShadow: '0 8px 24px rgba(229, 126, 51, 0.4)'
+                width: `${100 / SLIDES.length}%`,
+                background: '#ffffff',
+                color: '#1a1a1a',
+                padding: '32px 36px',
+                minHeight: '270px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '24px',
+                position: 'relative',
+                flexShrink: 0
               }}
             >
-              <PlusCircle size={18} />
-              <span>{slide.buttonText}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Bottom Feature Badges */}
-        <div className="hero-slider-features" style={{
-          position: 'relative',
-          zIndex: 2,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '12px',
-          paddingTop: '16px',
-          marginTop: '16px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.15)'
-        }}>
-          {slide.features.map((feat, idx) => {
-            const IconComponent = feat.icon;
-            return (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Left Column Text Content */}
+              <div style={{ flex: 1, maxWidth: '580px', position: 'relative', zIndex: 2 }}>
                 <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff',
-                  flexShrink: 0
+                  gap: '6px',
+                  background: 'rgba(42, 89, 62, 0.08)',
+                  border: '1px solid rgba(42, 89, 62, 0.2)',
+                  padding: '4px 12px',
+                  borderRadius: '16px',
+                  marginBottom: '12px'
                 }}>
-                  <IconComponent size={16} />
+                  <Sparkles size={12} color="#2A593E" />
+                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#2A593E', letterSpacing: '0.04em' }}>
+                    {slide.tag}
+                  </span>
                 </div>
-                <div>
-                  <strong style={{ display: 'block', color: '#ffffff', fontSize: '0.82rem', lineHeight: '1.2' }}>{feat.title}</strong>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{feat.sub}</span>
+
+                <h2 className="hero-slider-title" style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 800, color: '#1a1a1a', lineHeight: '1.2' }}>
+                  {slide.title}
+                  <span style={{ color: '#D8993E' }}>{slide.titleHighlight}</span>
+                </h2>
+
+                <p className="hero-slider-sub" style={{ fontSize: '0.92rem', color: '#555555', marginTop: '6px', marginBottom: '16px' }}>
+                  {slide.subtitle}
+                  <strong style={{ color: '#D8993E' }}>{slide.subtitleHighlight}</strong>
+                </p>
+
+                {/* Features Row */}
+                <div className="hero-slider-features" style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '10px',
+                  paddingTop: '14px',
+                  borderTop: '1px solid #f0f0f0'
+                }}>
+                  {slide.features.map((feat, idx) => {
+                    const IconComponent = feat.icon;
+                    return (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '8px',
+                          background: feat.bg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: feat.color,
+                          flexShrink: 0
+                        }}>
+                          <IconComponent size={15} />
+                        </div>
+                        <div>
+                          <strong style={{ display: 'block', color: '#1a1a1a', fontSize: '0.8rem', lineHeight: '1.2' }}>{feat.title}</strong>
+                          <span style={{ fontSize: '0.7rem', color: '#666666' }}>{feat.sub}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* Slide Indicators / Dots */}
-      <div style={{
-        position: 'absolute',
-        bottom: '12px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 10,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px'
-      }}>
-        {SLIDES.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentIndex(idx)}
-            aria-label={`Go to slide ${idx + 1}`}
-            style={{
-              width: currentIndex === idx ? '24px' : '8px',
-              height: '8px',
-              borderRadius: '4px',
-              background: currentIndex === idx ? '#e57e33' : 'rgba(255, 255, 255, 0.4)',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-          />
-        ))}
+              {/* Right Column Prominent Crisp Hero Image Card */}
+              <div className="hero-slide-image-col" style={{
+                width: '420px',
+                height: '220px',
+                position: 'relative',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                boxShadow: '0 14px 32px rgba(0, 0, 0, 0.18)',
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                flexShrink: 0
+              }}>
+                <img 
+                  src={slide.image} 
+                  alt={slide.title} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+                
+                {/* Image Gradient Dark Overlay */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)'
+                }} />
+
+                {/* Floating Image Badge */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  left: '12px',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(10px)',
+                  padding: '4px 12px',
+                  borderRadius: '12px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: '#2A593E',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}>
+                  <Sparkles size={12} color="#D8993E" />
+                  <span>{slide.imageBadge}</span>
+                </div>
+
+                <button 
+                  onClick={onOnboardClick}
+                  className="btn btn-primary"
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    right: '12px',
+                    padding: '8px 16px',
+                    fontSize: '0.8rem',
+                    background: '#D8993E',
+                    color: '#ffffff',
+                    boxShadow: '0 4px 14px rgba(216, 153, 62, 0.4)'
+                  }}
+                >
+                  <PlusCircle size={14} />
+                  <span>Onboard</span>
+                </button>
+              </div>
+
+            </div>
+          ))}
+        </div>
+
+        {/* Slide Indicators / Dots */}
+        <div style={{
+          position: 'absolute',
+          bottom: '10px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}>
+          {SLIDES.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+              style={{
+                width: currentIndex === idx ? '24px' : '8px',
+                height: '8px',
+                borderRadius: '4px',
+                background: currentIndex === idx ? '#D8993E' : 'rgba(0, 0, 0, 0.2)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

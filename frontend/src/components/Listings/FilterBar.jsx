@@ -1,84 +1,100 @@
 import React from 'react';
-import { Search, Filter, Home, Building, BedDouble, Key, Layers } from 'lucide-react';
+import { Search, Home, Building2, BedDouble, Users, SlidersHorizontal } from 'lucide-react';
 
-const CATEGORY_TABS = [
-  { id: 'All', label: 'All Categories', icon: Layers },
-  { id: 'PG', label: 'PGs', icon: Home },
-  { id: 'Hostel', label: 'Hostels', icon: Building },
+const CATEGORIES = [
+  { id: 'All', label: 'All Categories', icon: Home },
+  { id: 'PG', label: 'PGs', icon: Building2 },
+  { id: 'Hostel', label: 'Hostels', icon: Building2 },
   { id: 'Dormitory', label: 'Dormitories', icon: BedDouble },
-  { id: 'Bachelor Room', label: 'Bachelor Rooms', icon: Key }
+  { id: 'Bachelor Room', label: 'Bachelor Rooms', icon: Users }
 ];
 
-export default function FilterBar({ selectedCategory, onCategoryChange, searchTerm, onSearchChange, totalCount }) {
+export default function FilterBar({
+  selectedCategory,
+  onCategoryChange,
+  searchTerm,
+  onSearchChange,
+  totalCount
+}) {
   return (
     <div style={{ marginBottom: '24px' }}>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '14px',
-        background: 'rgba(255, 255, 255, 0.07)',
-        backdropFilter: 'blur(12px)',
-        padding: '16px',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--border-glass)'
-      }}>
-        {/* Search and Count Bar */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-          <div style={{ position: 'relative', flex: '1', minWidth: '220px' }}>
-            <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+      {/* Search & Category Filter Header Container */}
+      <div className="glass-card" style={{ padding: '16px 20px', borderRadius: 'var(--radius-md)' }}>
+        
+        {/* Top Search Input Row */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search
+              size={18}
+              color="#D8993E"
+              style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
+            />
             <input
               type="text"
-              placeholder="Search property name, location, owner..."
+              placeholder="Search property name, location (e.g. Koramangala), owner..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
               className="form-input"
-              style={{ paddingLeft: '42px', height: '44px', fontSize: '0.9rem' }}
+              style={{
+                paddingLeft: '44px',
+                borderRadius: '30px',
+                background: 'rgba(25, 54, 38, 0.85)',
+                borderColor: 'rgba(255, 255, 255, 0.15)'
+              }}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            <Filter size={15} />
+          <div style={{
+            fontSize: '0.85rem',
+            color: 'var(--text-sub)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            flexShrink: 0
+          }}>
+            <SlidersHorizontal size={16} color="#D8993E" />
             <span>Showing <strong style={{ color: '#ffffff' }}>{totalCount}</strong> Properties</span>
           </div>
         </div>
 
-        {/* Category Tabs (Horizontally scrollable on phones) */}
+        {/* Category Tabs Scrollable Row */}
         <div style={{
           display: 'flex',
+          alignItems: 'center',
           gap: '8px',
           overflowX: 'auto',
           paddingBottom: '4px',
-          WebkitOverflowScrolling: 'touch',
+          msOverflowStyle: 'none',
           scrollbarWidth: 'none'
         }}>
-          {CATEGORY_TABS.map((tab) => {
-            const IconComp = tab.icon;
-            const isSelected = selectedCategory === tab.id;
+          {CATEGORIES.map((cat) => {
+            const IconComponent = cat.icon;
+            const isSelected = selectedCategory === cat.id;
 
             return (
               <button
-                key={tab.id}
-                onClick={() => onCategoryChange(tab.id)}
+                key={cat.id}
+                onClick={() => onCategoryChange(cat.id)}
+                className="btn"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
                   padding: '8px 16px',
-                  borderRadius: '30px',
-                  background: isSelected ? '#e57e33' : 'rgba(255, 255, 255, 0.1)',
-                  color: isSelected ? '#ffffff' : 'var(--text-sub)',
-                  border: isSelected ? 'none' : '1px solid var(--border-glass)',
-                  fontSize: '0.82rem',
-                  fontWeight: isSelected ? 700 : 500,
-                  cursor: 'pointer',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
                   whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  transition: 'all 0.2s ease',
-                  minHeight: '38px'
+                  background: isSelected ? '#D8993E' : 'rgba(255, 255, 255, 0.08)',
+                  color: isSelected ? '#ffffff' : 'var(--text-sub)',
+                  border: isSelected ? '1px solid #D8993E' : '1px solid var(--border-glass)',
+                  boxShadow: isSelected ? '0 4px 14px rgba(216, 153, 62, 0.3)' : 'none',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <IconComp size={15} />
-                <span>{tab.label}</span>
+                <IconComponent size={15} />
+                <span>{cat.label}</span>
               </button>
             );
           })}

@@ -16,7 +16,6 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
     dailyPrice = 0,
     longStayDuration = '1 Month+',
     monthlyPrice = 0,
-    rent,
     deposit,
     address,
     imageUrl,
@@ -34,7 +33,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
       position: 'fixed',
       inset: 0,
       zIndex: 200,
-      background: 'rgba(10, 25, 18, 0.88)',
+      background: 'rgba(18, 42, 29, 0.88)',
       backdropFilter: 'blur(16px)',
       WebkitBackdropFilter: 'blur(16px)',
       display: 'flex',
@@ -50,7 +49,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
         position: 'relative',
         padding: '0',
         borderRadius: 'var(--radius-lg)',
-        background: '#19402c',
+        background: '#2A593E',
         border: '1px solid rgba(255, 255, 255, 0.2)',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
       }}>
@@ -88,7 +87,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
           <div style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to top, #19402c 0%, transparent 60%)'
+            background: 'linear-gradient(to top, #2A593E 0%, transparent 60%)'
           }} />
 
           <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '20px' }}>
@@ -96,7 +95,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
               <span className={`badge ${badgeClass}`}>
                 {category}
               </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '12px', background: '#e57e33', color: '#ffffff' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '12px', background: '#D8993E', color: '#ffffff' }}>
                 {stayType}
               </span>
             </div>
@@ -104,7 +103,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
               {name}
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-sub)', fontSize: '0.85rem', marginTop: '4px' }}>
-              <MapPin size={15} color="#e57e33" />
+              <MapPin size={15} color="#D8993E" />
               <span>{place}</span>
             </div>
           </div>
@@ -117,7 +116,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             padding: '16px 20px',
             borderRadius: 'var(--radius-md)',
             background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(229, 126, 51, 0.3)',
+            border: '1px solid rgba(216, 153, 62, 0.3)',
             marginBottom: '20px',
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -125,7 +124,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
           }}>
             {dailyPrice > 0 && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#fca966', fontSize: '0.78rem', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f7c784', fontSize: '0.78rem', fontWeight: 600 }}>
                   <Clock size={14} />
                   <span>Short Stay (1-7 Days)</span>
                 </div>
@@ -139,10 +138,10 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             {monthlyPrice > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ffffff', fontSize: '0.78rem', fontWeight: 600 }}>
-                  <Calendar size={14} color="#e57e33" />
+                  <Calendar size={14} color="#D8993E" />
                   <span>Long Stay (1+ Month)</span>
                 </div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#e57e33', marginTop: '2px' }}>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#D8993E', marginTop: '2px' }}>
                   ₹{monthlyPrice} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/ month</span>
                 </div>
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Option: {longStayDuration}</span>
@@ -159,7 +158,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             <a
               href={`tel:${ownerMobile}`}
               className="btn btn-primary"
-              style={{ padding: '10px 18px', width: '100%', gridColumn: '1 / -1' }}
+              style={{ padding: '10px 18px', width: '100%', gridColumn: '1 / -1', background: '#D8993E' }}
             >
               <Phone size={18} />
               <span>Call Owner ({ownerMobile})</span>
@@ -182,13 +181,13 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Owner Name:</span>
               <div style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <User size={16} color="#e57e33" />
+                <User size={16} color="#D8993E" />
                 <span>{ownerName}</span>
               </div>
             </div>
             <div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Contact:</span>
-              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#e57e33' }}>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#D8993E' }}>
                 {ownerMobile}
               </div>
             </div>
@@ -203,7 +202,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
           {/* Category Specific Detailed Breakdown */}
           <div style={{ marginBottom: '20px' }}>
             <h4 style={{ fontSize: '1.05rem', color: '#ffffff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={18} color="#e57e33" />
+              <ShieldCheck size={18} color="#D8993E" />
               <span>{category} Category Parameters</span>
             </h4>
 
@@ -280,7 +279,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
                       gap: '5px'
                     }}
                   >
-                    <CheckCircle2 size={13} color="#e57e33" />
+                    <CheckCircle2 size={13} color="#D8993E" />
                     <span>{item}</span>
                   </span>
                 ))}
@@ -312,7 +311,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
               <span>Delete Listing</span>
             </button>
 
-            <button onClick={onClose} className="btn btn-primary" style={{ padding: '10px 24px' }}>
+            <button onClick={onClose} className="btn btn-primary" style={{ padding: '10px 24px', background: '#D8993E' }}>
               Close Window
             </button>
           </div>
