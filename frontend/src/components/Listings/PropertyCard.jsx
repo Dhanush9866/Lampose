@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Phone, ArrowRight, Clock, Calendar, Wifi, ShieldCheck, Utensils, Zap, Sparkles } from 'lucide-react';
+import { MapPin, Phone, ArrowRight, Clock, Calendar, Wifi, ShieldCheck, Utensils, Zap, Sparkles, Lock } from 'lucide-react';
 
 export default function PropertyCard({ property, onViewDetails }) {
   const {
@@ -16,11 +16,6 @@ export default function PropertyCard({ property, onViewDetails }) {
     amenities = []
   } = property;
 
-  const badgeClass =
-    category === 'PG' ? 'badge-pg' :
-    category === 'Hostel' ? 'badge-hostel' :
-    category === 'Dormitory' ? 'badge-dormitory' : 'badge-bachelor';
-
   const displayPrice = rent || monthlyPrice || dailyPrice || 0;
   const isDaily = stayType === 'Short Stay' || (category === 'Dormitory' && !monthlyPrice);
 
@@ -34,12 +29,10 @@ export default function PropertyCard({ property, onViewDetails }) {
       borderRadius: '20px',
       overflow: 'hidden',
       position: 'relative',
-      background: 'rgba(255, 255, 255, 0.07)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      border: '1px solid rgba(255, 255, 255, 0.14)',
-      boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)',
-      transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+      background: '#ffffff',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.03)',
+      transition: 'all 0.3s ease'
     }}>
       {/* Image Banner Box */}
       <div className="card-image-box" style={{ position: 'relative', height: '195px', overflow: 'hidden' }}>
@@ -51,71 +44,76 @@ export default function PropertyCard({ property, onViewDetails }) {
             width: '100%', 
             height: '100%', 
             objectFit: 'cover',
-            transition: 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)'
+            transition: 'transform 0.5s ease'
           }}
         />
 
-        {/* Gradient Dark Overlay */}
+        {/* Soft Vignette Overlay */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to top, rgba(30, 65, 46, 0.95) 0%, rgba(30, 65, 46, 0.2) 60%, transparent 100%)'
+          background: 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 50%)'
         }} />
 
-        {/* Category Floating Pill Badge */}
+        {/* Category Floating Pill Badge (White background top-left) */}
         <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 2 }}>
-          <span className={`badge ${badgeClass}`} style={{
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-            border: '1px solid rgba(255,255,255,0.3)'
+          <span style={{
+            background: '#ffffff',
+            color: '#181e1b',
+            padding: '5px 12px',
+            borderRadius: '12px',
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px'
           }}>
-            <Sparkles size={11} />
+            <Sparkles size={11} color="#45855a" />
             {category}
           </span>
         </div>
 
-        {/* Stay Type Floating Pill Badge */}
-        {stayType && (
+        {/* Stay Type Floating Pill Badge (Dark background top-right) */}
+        {stayType && category !== 'Bachelor Room' && (
           <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2 }}>
             <span style={{
               fontSize: '0.72rem',
               fontWeight: 700,
-              padding: '4px 10px',
-              borderRadius: '20px',
-              background: stayType.includes('Short') ? 'rgba(216, 153, 62, 0.92)' : 'rgba(42, 89, 62, 0.92)',
+              padding: '5px 12px',
+              borderRadius: '12px',
+              background: '#181e1b',
               color: '#ffffff',
-              backdropFilter: 'blur(12px)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              border: '1px solid rgba(255,255,255,0.3)',
-              display: 'flex',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '4px'
             }}>
-              {stayType.includes('Short') ? <Clock size={12} /> : <Calendar size={12} />}
+              {stayType.includes('Short') ? <Clock size={12} /> : <Lock size={12} />}
               {stayType}
             </span>
           </div>
         )}
 
-        {/* Floating Rent Tag */}
+        {/* Floating Rent Tag (White background bottom-right) */}
         <div style={{
           position: 'absolute',
           bottom: '12px',
           right: '12px',
           zIndex: 2,
-          background: 'linear-gradient(135deg, rgba(216, 153, 62, 0.95) 0%, rgba(180, 115, 30, 0.95) 100%)',
-          backdropFilter: 'blur(10px)',
+          background: '#ffffff',
           padding: '6px 14px',
           borderRadius: '14px',
-          boxShadow: '0 8px 20px rgba(216, 153, 62, 0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 6px 16px rgba(0, 0, 0, 0.15)',
           display: 'flex',
           alignItems: 'baseline',
           gap: '2px'
         }}>
-          <span style={{ fontSize: '0.8rem', color: '#ffffff', fontWeight: 600 }}>₹</span>
-          <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em' }}>{displayPrice}</span>
-          <span style={{ fontSize: '0.72rem', color: '#f7e7cf', fontWeight: 600 }}>
+          <span style={{ fontSize: '0.85rem', color: '#181e1b', fontWeight: 800 }}>₹</span>
+          <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#181e1b', letterSpacing: '-0.02em' }}>{displayPrice}</span>
+          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
             {isDaily ? '/day' : '/mo'}
           </span>
         </div>
@@ -128,7 +126,7 @@ export default function PropertyCard({ property, onViewDetails }) {
         <h3 style={{
           fontSize: '1.15rem',
           fontWeight: 800,
-          color: '#ffffff',
+          color: '#181e1b',
           marginBottom: '6px',
           lineHeight: '1.35',
           fontFamily: "'Outfit', 'Inter', sans-serif"
@@ -137,8 +135,8 @@ export default function PropertyCard({ property, onViewDetails }) {
         </h3>
 
         {/* Location Tag */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-sub)', fontSize: '0.85rem', marginBottom: '12px' }}>
-          <MapPin size={14} color="#D8993E" style={{ flexShrink: 0 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.85rem', marginBottom: '12px' }}>
+          <MapPin size={14} color="#45855a" style={{ flexShrink: 0 }} />
           <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{place}</span>
         </div>
 
@@ -150,11 +148,11 @@ export default function PropertyCard({ property, onViewDetails }) {
                 key={idx}
                 style={{
                   fontSize: '0.72rem',
-                  padding: '3px 9px',
+                  padding: '4px 10px',
                   borderRadius: '12px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  color: 'var(--text-muted)',
+                  background: '#f1f5f2',
+                  border: '1px solid #e2e8f0',
+                  color: '#475569',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px'
@@ -171,15 +169,15 @@ export default function PropertyCard({ property, onViewDetails }) {
         <div style={{
           marginTop: 'auto',
           paddingTop: '12px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          borderTop: '1px solid #f1f5f2',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '14px'
         }}>
           <div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Owner / Manager</span>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#ffffff' }}>
+            <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Owner / Manager</span>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#181e1b' }}>
               {ownerName}
             </div>
           </div>
@@ -190,9 +188,9 @@ export default function PropertyCard({ property, onViewDetails }) {
             style={{
               padding: '6px 12px',
               borderRadius: '20px',
-              background: 'rgba(216, 153, 62, 0.18)',
-              border: '1px solid rgba(216, 153, 62, 0.4)',
-              color: '#D8993E',
+              background: '#eaf3ed',
+              border: '1px solid #c2e2cc',
+              color: '#45855a',
               fontSize: '0.8rem',
               fontWeight: 700,
               display: 'flex',
@@ -207,7 +205,7 @@ export default function PropertyCard({ property, onViewDetails }) {
           </a>
         </div>
 
-        {/* Clean Glass Secondary Action Button */}
+        {/* Clean Secondary Action Button */}
         <button
           onClick={() => onViewDetails(property)}
           className="btn card-action-btn-secondary"
@@ -215,15 +213,16 @@ export default function PropertyCard({ property, onViewDetails }) {
             width: '100%',
             padding: '10px',
             fontSize: '0.88rem',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(255, 255, 255, 0.18)',
-            color: '#ffffff',
+            background: '#f8faf8',
+            border: '1px solid #e2e8f0',
+            color: '#181e1b',
             borderRadius: '14px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            fontWeight: 600
           }}
         >
           <span>View Full Specifications</span>
@@ -235,8 +234,8 @@ export default function PropertyCard({ property, onViewDetails }) {
 }
 
 function AmenityIcon({ name }) {
-  if (name.includes('WiFi')) return <Wifi size={12} color="#D8993E" />;
-  if (name.includes('AC')) return <Zap size={12} color="#D8993E" />;
-  if (name.includes('Food')) return <Utensils size={12} color="#D8993E" />;
-  return <ShieldCheck size={12} color="#D8993E" />;
+  if (name.includes('WiFi')) return <Wifi size={12} color="#45855a" />;
+  if (name.includes('AC')) return <Zap size={12} color="#45855a" />;
+  if (name.includes('Food')) return <Utensils size={12} color="#45855a" />;
+  return <ShieldCheck size={12} color="#45855a" />;
 }

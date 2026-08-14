@@ -20,11 +20,11 @@ export default function CategoryFieldsStep({ category, details = {}, onChangeDet
     <div className="animate-fade-in" style={{
       marginBottom: '28px',
       padding: '24px',
-      background: 'rgba(15, 23, 42, 0.4)',
+      background: '#f8faf8',
       borderRadius: 'var(--radius-md)',
-      border: '1px solid var(--border-glass)'
+      border: '1px solid #e2e8f0'
     }}>
-      <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <h3 style={{ fontSize: '1.2rem', color: '#181e1b', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span className={`badge ${
           category === 'PG' ? 'badge-pg' :
           category === 'Hostel' ? 'badge-hostel' :

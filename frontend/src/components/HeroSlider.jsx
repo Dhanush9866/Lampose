@@ -1,53 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, MapPin, ShieldCheck, Heart, Sparkles, Clock, Calendar } from 'lucide-react';
+import { PlusCircle, MapPin, ShieldCheck, Heart, Sparkles, Clock, Calendar, Target } from 'lucide-react';
 
 const SLIDES = [
   {
     id: 1,
-    tag: "INDIA'S ALL-IN-ONE URBAN LIVING PLATFORM",
-    title: "More Choices. ",
-    titleHighlight: "Better Experiences.",
-    subtitle: "Top hostels, verified PGs & bachelor flats — ",
-    subtitleHighlight: "all in one place.",
-    buttonText: "Onboard Property",
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80",
-    imageBadge: "100% Verified PGs",
-    features: [
-      { icon: MapPin, title: "Top Locations", sub: "Near You", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" },
-      { icon: ShieldCheck, title: "Verified Partners", sub: "You Can Trust", color: "#2A593E", bg: "rgba(42, 89, 62, 0.12)" },
-      { icon: Heart, title: "Great Reviews", sub: "Happy Customers", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" }
-    ]
-  },
-  {
-    id: 2,
-    tag: "FLEXIBLE DURATION OPTIONS",
-    title: "Short Stay or Long Stay? ",
-    titleHighlight: "We Have Both.",
-    subtitle: "List daily stays (1-7 days) or monthly accommodation — ",
-    subtitleHighlight: "direct to tenants.",
-    buttonText: "Onboard Short / Long Stay",
-    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
-    imageBadge: "Daily & Monthly Rates",
-    features: [
-      { icon: Clock, title: "1 - 7 Days", sub: "Short Stay Rate", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" },
-      { icon: Calendar, title: "1 Month+", sub: "Monthly Rent", color: "#2A593E", bg: "rgba(42, 89, 62, 0.12)" },
-      { icon: Sparkles, title: "0% Brokerage", sub: "Direct Enquiries", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" }
-    ]
-  },
-  {
-    id: 3,
     tag: "GROW YOUR ACCOMMODATION BUSINESS",
     title: "Onboard Your Property ",
     titleHighlight: "In 2 Minutes.",
     subtitle: "Join thousands of PG, Hostel, Dormitory & Bachelor Flat owners — ",
     subtitleHighlight: "fill details & go live instantly.",
-    buttonText: "Start Onboarding Now",
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80",
     imageBadge: "Instant Listing",
     features: [
-      { icon: ShieldCheck, title: "Verified Owners", sub: "Trusted Platform", color: "#2A593E", bg: "rgba(42, 89, 62, 0.12)" },
-      { icon: Sparkles, title: "Fast Onboarding", sub: "Live in Minutes", color: "#D8993E", bg: "rgba(216, 153, 62, 0.12)" },
-      { icon: MapPin, title: "PAN India", sub: "Major Cities", color: "#2A593E", bg: "rgba(42, 89, 62, 0.12)" }
+      { icon: ShieldCheck, title: "Verified Owners", sub: "Trusted Platform", color: "#45855a", bg: "#f0f7f2" },
+      { icon: Sparkles, title: "Fast Onboarding", sub: "Live in Minutes", color: "#45855a", bg: "#f0f7f2" },
+      { icon: MapPin, title: "PAN India", sub: "Major Cities", color: "#45855a", bg: "#f0f7f2" }
+    ]
+  },
+  {
+    id: 2,
+    tag: "INDIA'S ALL-IN-ONE URBAN LIVING PLATFORM",
+    title: "More Choices. ",
+    titleHighlight: "Better Experiences.",
+    subtitle: "Top hostels, verified PGs & bachelor flats — ",
+    subtitleHighlight: "all in one place.",
+    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
+    imageBadge: "100% Verified PGs",
+    features: [
+      { icon: MapPin, title: "Top Locations", sub: "Near You", color: "#45855a", bg: "#f0f7f2" },
+      { icon: ShieldCheck, title: "Verified Partners", sub: "You Can Trust", color: "#45855a", bg: "#f0f7f2" },
+      { icon: Heart, title: "Great Reviews", sub: "Happy Customers", color: "#45855a", bg: "#f0f7f2" }
+    ]
+  },
+  {
+    id: 3,
+    tag: "FLEXIBLE DURATION OPTIONS",
+    title: "Short Stay or Long Stay? ",
+    titleHighlight: "We Have Both.",
+    subtitle: "List daily stays (1-7 days) or monthly accommodation — ",
+    subtitleHighlight: "direct to tenants.",
+    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+    imageBadge: "Daily & Monthly Rates",
+    features: [
+      { icon: Clock, title: "1 - 7 Days", sub: "Short Stay Rate", color: "#45855a", bg: "#f0f7f2" },
+      { icon: Calendar, title: "1 Month+", sub: "Monthly Rent", color: "#45855a", bg: "#f0f7f2" },
+      { icon: Sparkles, title: "0% Brokerage", sub: "Direct Enquiries", color: "#45855a", bg: "#f0f7f2" }
     ]
   }
 ];
@@ -69,9 +66,6 @@ export default function HeroSlider({ onOnboardClick }) {
     <div 
       className="hero-slider-wrapper"
       style={{
-        background: '#2a593e', /* Solid background blocking grid lines behind hero section */
-        borderRadius: '24px',
-        padding: '2px',
         marginBottom: '24px'
       }}
     >
@@ -84,11 +78,11 @@ export default function HeroSlider({ onOnboardClick }) {
           borderRadius: '24px',
           overflow: 'hidden',
           background: '#ffffff',
-          boxShadow: '0 20px 48px rgba(0, 0, 0, 0.28)',
-          border: '1px solid rgba(0, 0, 0, 0.08)'
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.03)',
+          border: '1px solid #e5e9e5'
         }}
       >
-        {/* Sliding Track - Smooth horizontal slide left */}
+        {/* Sliding Track */}
         <div style={{
           display: 'flex',
           width: `${SLIDES.length * 100}%`,
@@ -99,12 +93,12 @@ export default function HeroSlider({ onOnboardClick }) {
           {SLIDES.map((slide) => (
             <div 
               key={slide.id}
+              className="hero-slide-item"
               style={{
                 width: `${100 / SLIDES.length}%`,
                 background: '#ffffff',
-                color: '#1a1a1a',
-                padding: '32px 36px',
-                minHeight: '270px',
+                color: '#181e1b',
+                minHeight: '260px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -119,44 +113,51 @@ export default function HeroSlider({ onOnboardClick }) {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  background: 'rgba(42, 89, 62, 0.08)',
-                  border: '1px solid rgba(42, 89, 62, 0.2)',
-                  padding: '4px 12px',
-                  borderRadius: '16px',
-                  marginBottom: '12px'
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  padding: '6px 14px',
+                  borderRadius: '20px',
+                  marginBottom: '16px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
                 }}>
-                  <Sparkles size={12} color="#2A593E" />
-                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#2A593E', letterSpacing: '0.04em' }}>
+                  <Sparkles size={13} color="#45855a" />
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#181e1b', letterSpacing: '0.04em' }}>
                     {slide.tag}
                   </span>
                 </div>
 
-                <h2 className="hero-slider-title" style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 800, color: '#1a1a1a', lineHeight: '1.2' }}>
+                <h2 className="hero-slider-title" style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', fontWeight: 800, color: '#181e1b', lineHeight: '1.2' }}>
                   {slide.title}
-                  <span style={{ color: '#D8993E' }}>{slide.titleHighlight}</span>
+                  <span style={{ color: '#45855a' }}>{slide.titleHighlight}</span>
                 </h2>
 
-                <p className="hero-slider-sub" style={{ fontSize: '0.92rem', color: '#555555', marginTop: '6px', marginBottom: '16px' }}>
+                <p className="hero-slider-sub" style={{ fontSize: '0.92rem', color: '#64748b', marginTop: '8px', marginBottom: '20px', lineHeight: '1.5' }}>
                   {slide.subtitle}
-                  <strong style={{ color: '#D8993E' }}>{slide.subtitleHighlight}</strong>
+                  <span style={{ color: '#45855a', fontWeight: 600 }}>{slide.subtitleHighlight}</span>
                 </p>
 
                 {/* Features Row */}
                 <div className="hero-slider-features" style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '10px',
-                  paddingTop: '14px',
-                  borderTop: '1px solid #f0f0f0'
+                  gap: '12px'
                 }}>
                   {slide.features.map((feat, idx) => {
                     const IconComponent = feat.icon;
                     return (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div key={idx} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '10px 12px',
+                        background: '#f8faf8',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '14px'
+                      }}>
                         <div style={{
-                          width: '30px',
-                          height: '30px',
-                          borderRadius: '8px',
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '10px',
                           background: feat.bg,
                           display: 'flex',
                           alignItems: 'center',
@@ -164,11 +165,11 @@ export default function HeroSlider({ onOnboardClick }) {
                           color: feat.color,
                           flexShrink: 0
                         }}>
-                          <IconComponent size={15} />
+                          <IconComponent size={16} />
                         </div>
                         <div>
-                          <strong style={{ display: 'block', color: '#1a1a1a', fontSize: '0.8rem', lineHeight: '1.2' }}>{feat.title}</strong>
-                          <span style={{ fontSize: '0.7rem', color: '#666666' }}>{feat.sub}</span>
+                          <strong style={{ display: 'block', color: '#181e1b', fontSize: '0.8rem', fontWeight: 700, lineHeight: '1.2' }}>{feat.title}</strong>
+                          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{feat.sub}</span>
                         </div>
                       </div>
                     );
@@ -176,15 +177,15 @@ export default function HeroSlider({ onOnboardClick }) {
                 </div>
               </div>
 
-              {/* Right Column Prominent Crisp Hero Image Card */}
+              {/* Right Column Prominent Hero Image Card */}
               <div className="hero-slide-image-col" style={{
-                width: '420px',
-                height: '220px',
+                width: '440px',
+                height: '240px',
                 position: 'relative',
                 borderRadius: '20px',
                 overflow: 'hidden',
-                boxShadow: '0 14px 32px rgba(0, 0, 0, 0.18)',
-                border: '1px solid rgba(0, 0, 0, 0.08)',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+                border: '1px solid #e2e8f0',
                 flexShrink: 0
               }}>
                 <img 
@@ -192,50 +193,48 @@ export default function HeroSlider({ onOnboardClick }) {
                   alt={slide.title} 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
-                
-                {/* Image Gradient Dark Overlay */}
-                <div style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)'
-                }} />
 
-                {/* Floating Image Badge */}
+                {/* Floating Image Badge - Instant Listing */}
                 <div style={{
                   position: 'absolute',
-                  bottom: '12px',
-                  left: '12px',
-                  background: 'rgba(255, 255, 255, 0.95)',
-                  backdropFilter: 'blur(10px)',
-                  padding: '4px 12px',
-                  borderRadius: '12px',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: '#2A593E',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  bottom: '14px',
+                  left: '14px',
+                  background: '#ffffff',
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: '#181e1b',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '5px'
+                  gap: '6px'
                 }}>
-                  <Sparkles size={12} color="#D8993E" />
+                  <Sparkles size={14} color="#45855a" />
                   <span>{slide.imageBadge}</span>
                 </div>
 
+                {/* Floating Onboard Button */}
                 <button 
                   onClick={onOnboardClick}
-                  className="btn btn-primary"
+                  className="btn"
                   style={{
                     position: 'absolute',
-                    bottom: '12px',
-                    right: '12px',
-                    padding: '8px 16px',
-                    fontSize: '0.8rem',
-                    background: '#D8993E',
+                    bottom: '14px',
+                    right: '14px',
+                    padding: '8px 18px',
+                    fontSize: '0.82rem',
+                    background: '#45855a',
                     color: '#ffffff',
-                    boxShadow: '0 4px 14px rgba(216, 153, 62, 0.4)'
+                    borderRadius: '20px',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 14px rgba(69, 133, 90, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
                   }}
                 >
-                  <PlusCircle size={14} />
+                  <Target size={14} />
                   <span>Onboard</span>
                 </button>
               </div>
@@ -244,34 +243,32 @@ export default function HeroSlider({ onOnboardClick }) {
           ))}
         </div>
 
-        {/* Slide Indicators / Dots */}
-        <div style={{
-          position: 'absolute',
-          bottom: '10px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px'
-        }}>
-          {SLIDES.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentIndex(idx)}
-              aria-label={`Go to slide ${idx + 1}`}
-              style={{
-                width: currentIndex === idx ? '24px' : '8px',
-                height: '8px',
-                borderRadius: '4px',
-                background: currentIndex === idx ? '#D8993E' : 'rgba(0, 0, 0, 0.2)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-            />
-          ))}
-        </div>
+      </div>
+
+      {/* Slide Indicators / Dots below container */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        marginTop: '14px'
+      }}>
+        {SLIDES.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentIndex(idx)}
+            aria-label={`Go to slide ${idx + 1}`}
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: currentIndex === idx ? '#45855a' : '#cbd5e1',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+          />
+        ))}
       </div>
     </div>
   );

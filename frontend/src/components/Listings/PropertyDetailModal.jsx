@@ -28,30 +28,38 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
     category === 'Hostel' ? 'badge-hostel' :
     category === 'Dormitory' ? 'badge-dormitory' : 'badge-bachelor';
 
+  const isSplashImage = imageUrl?.includes('splash') || imageUrl?.includes('logo');
+
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 200,
-      background: 'rgba(18, 42, 29, 0.88)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '12px'
-    }} className="animate-fade-in">
-      <div className="glass-card modal-content" style={{
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px 14px',
+        overflowY: 'auto'
+      }} 
+      className="animate-fade-in"
+    >
+      <div className="modal-content" style={{
         maxWidth: '720px',
         width: '100%',
-        maxHeight: '92vh',
+        maxHeight: 'calc(100vh - 40px)',
         overflowY: 'auto',
         position: 'relative',
         padding: '0',
-        borderRadius: 'var(--radius-lg)',
-        background: '#2A593E',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+        borderRadius: '24px',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+        margin: 'auto'
       }}>
         {/* Close Button */}
         <button
@@ -64,93 +72,103 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             width: '40px',
             height: '40px',
             borderRadius: '50%',
-            background: 'rgba(0, 0, 0, 0.6)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            color: '#ffffff',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            color: '#181e1b',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            touchAction: 'manipulation'
+            touchAction: 'manipulation',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
           }}
         >
           <X size={20} />
         </button>
 
-        {/* Hero Image */}
-        <div style={{ position: 'relative', height: '220px' }}>
+        {/* Hero Image Banner */}
+        <div style={{ position: 'relative', height: '220px', background: isSplashImage ? '#f6f8f6' : '#181e1b', overflow: 'hidden' }}>
           <img
-            src={imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'}
+            src={imageUrl || '/lampose-logo-splash.png'}
             alt={name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: isSplashImage ? 'contain' : 'cover',
+              padding: isSplashImage ? '20px' : '0'
+            }}
           />
           <div style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to top, #2A593E 0%, transparent 60%)'
+            background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'
           }} />
 
           <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span className={`badge ${badgeClass}`}>
+              <span className={`badge ${badgeClass}`} style={{ background: '#ffffff', color: '#181e1b', border: 'none', fontWeight: 700 }}>
                 {category}
               </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '12px', background: '#D8993E', color: '#ffffff' }}>
-                {stayType}
-              </span>
+              {category !== 'Bachelor Room' && stayType && (
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '12px', background: '#181e1b', color: '#ffffff' }}>
+                  {stayType}
+                </span>
+              )}
             </div>
-            <h2 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.8rem)', fontWeight: 800, color: '#ffffff', lineHeight: '1.2' }}>
+            <h2 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.8rem)', fontWeight: 800, color: '#ffffff', lineHeight: '1.2', textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
               {name}
             </h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-sub)', fontSize: '0.85rem', marginTop: '4px' }}>
-              <MapPin size={15} color="#D8993E" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ffffff', fontSize: '0.86rem', marginTop: '4px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+              <MapPin size={15} color="#fadf5d" />
               <span>{place}</span>
             </div>
           </div>
         </div>
 
         {/* Content Body */}
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '24px 20px' }}>
           {/* Stay Type & Pricing Structure */}
           <div style={{
             padding: '16px 20px',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(216, 153, 62, 0.3)',
+            borderRadius: '16px',
+            background: '#f8faf8',
+            border: '1px solid #e2e8f0',
             marginBottom: '20px',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '14px'
           }}>
             {dailyPrice > 0 && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#f7c784', fontSize: '0.78rem', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#45855a', fontSize: '0.78rem', fontWeight: 600 }}>
                   <Clock size={14} />
                   <span>Short Stay (1-7 Days)</span>
                 </div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
-                  ₹{dailyPrice} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/ day</span>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#181e1b', marginTop: '2px' }}>
+                  ₹{dailyPrice} <span style={{ fontSize: '0.8rem', color: '#64748b' }}>/ day</span>
                 </div>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Option: {shortStayDuration}</span>
+                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Option: {shortStayDuration}</span>
               </div>
             )}
 
             {monthlyPrice > 0 && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#ffffff', fontSize: '0.78rem', fontWeight: 600 }}>
-                  <Calendar size={14} color="#D8993E" />
-                  <span>Long Stay (1+ Month)</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#45855a', fontSize: '0.78rem', fontWeight: 600 }}>
+                  <Calendar size={14} color="#45855a" />
+                  <span>{category === 'Bachelor Room' ? 'Monthly Rent' : 'Long Stay (1+ Month)'}</span>
                 </div>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#D8993E', marginTop: '2px' }}>
-                  ₹{monthlyPrice} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/ month</span>
+                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#45855a', marginTop: '2px' }}>
+                  ₹{monthlyPrice} <span style={{ fontSize: '0.8rem', color: '#64748b' }}>/ month</span>
                 </div>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Option: {longStayDuration}</span>
+                {category !== 'Bachelor Room' && longStayDuration && (
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Option: {longStayDuration}</span>
+                )}
               </div>
             )}
 
             <div>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Security Deposit</span>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff', marginTop: '4px' }}>
+              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>Security Deposit</span>
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#181e1b', marginTop: '2px' }}>
                 ₹{deposit || 0}
               </div>
             </div>
@@ -158,7 +176,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             <a
               href={`tel:${ownerMobile}`}
               className="btn btn-primary"
-              style={{ padding: '10px 18px', width: '100%', gridColumn: '1 / -1', background: '#D8993E' }}
+              style={{ padding: '12px 18px', width: '100%', gridColumn: '1 / -1', background: '#45855a', borderRadius: '12px', fontSize: '0.95rem' }}
             >
               <Phone size={18} />
               <span>Call Owner ({ownerMobile})</span>
@@ -167,48 +185,48 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
 
           {/* Owner Details Card */}
           <div style={{
-            padding: '14px 16px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid var(--border-glass)',
+            padding: '16px',
+            borderRadius: '16px',
+            background: '#f8faf8',
+            border: '1px solid #e2e8f0',
             marginBottom: '20px',
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '10px'
+            gap: '12px'
           }}>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Owner Name:</span>
-              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <User size={16} color="#D8993E" />
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Owner Name:</span>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#181e1b', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                <User size={16} color="#45855a" />
                 <span>{ownerName}</span>
               </div>
             </div>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Contact:</span>
-              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#D8993E' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Contact:</span>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#45855a', marginTop: '2px' }}>
                 {ownerMobile}
               </div>
             </div>
             {address && (
-              <div style={{ width: '100%', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Street Address:</span>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-sub)', marginTop: '2px' }}>{address}</p>
+              <div style={{ width: '100%', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Street Address:</span>
+                <p style={{ fontSize: '0.85rem', color: '#181e1b', marginTop: '2px', lineHeight: '1.4' }}>{address}</p>
               </div>
             )}
           </div>
 
           {/* Category Specific Detailed Breakdown */}
           <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ fontSize: '1.05rem', color: '#ffffff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={18} color="#D8993E" />
+            <h4 style={{ fontSize: '1.05rem', color: '#181e1b', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldCheck size={18} color="#45855a" />
               <span>{category} Category Parameters</span>
             </h4>
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
               gap: '10px'
             }}>
               {/* PG Specs */}
@@ -260,26 +278,27 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
           {/* Amenities Grid */}
           {amenities.length > 0 && (
             <div style={{ marginBottom: '24px' }}>
-              <h4 style={{ fontSize: '1.05rem', color: '#ffffff', marginBottom: '10px' }}>
+              <h4 style={{ fontSize: '1.05rem', color: '#181e1b', fontWeight: 700, marginBottom: '10px' }}>
                 Included Amenities
               </h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {amenities.map((item, idx) => (
                   <span
                     key={idx}
                     style={{
-                      padding: '5px 12px',
+                      padding: '6px 14px',
                       borderRadius: '20px',
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid var(--border-glass)',
-                      color: 'var(--text-main)',
-                      fontSize: '0.8rem',
+                      background: '#eaf3ed',
+                      border: '1px solid #c2e2cc',
+                      color: '#181e1b',
+                      fontWeight: 600,
+                      fontSize: '0.82rem',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '5px'
+                      gap: '6px'
                     }}
                   >
-                    <CheckCircle2 size={13} color="#D8993E" />
+                    <CheckCircle2 size={14} color="#45855a" />
                     <span>{item}</span>
                   </span>
                 ))}
@@ -288,30 +307,30 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
           )}
 
           {/* Footer Actions */}
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '10px',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingTop: '16px',
-            borderTop: '1px solid var(--border-glass)'
-          }}>
-            <button
-              onClick={() => {
-                if (window.confirm(`Are you sure you want to delete "${name}" listing?`)) {
-                  onDelete(_id);
-                  onClose();
-                }
-              }}
-              className="btn btn-secondary"
-              style={{ color: '#f43f5e', borderColor: 'rgba(244, 63, 94, 0.3)', padding: '10px 16px' }}
-            >
-              <Trash2 size={16} />
-              <span>Delete Listing</span>
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '16px', borderTop: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '10px' }}>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(_id)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  color: '#dc2626',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Trash2 size={16} />
+                <span>Delete Listing</span>
+              </button>
+            )}
 
-            <button onClick={onClose} className="btn btn-primary" style={{ padding: '10px 24px', background: '#D8993E' }}>
+            <button onClick={onClose} className="btn" style={{ padding: '10px 24px', background: '#181e1b', color: '#ffffff', borderRadius: '12px' }}>
               Close Window
             </button>
           </div>
@@ -324,13 +343,13 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
 function SpecItem({ label, value }) {
   return (
     <div style={{
-      padding: '10px 12px',
-      borderRadius: 'var(--radius-sm)',
-      background: 'rgba(255, 255, 255, 0.05)',
-      border: '1px solid var(--border-glass)'
+      padding: '12px 14px',
+      borderRadius: '12px',
+      background: '#f8faf8',
+      border: '1px solid #e2e8f0'
     }}>
-      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>{label}</span>
-      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#ffffff' }}>{value}</span>
+      <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block', fontWeight: 500, marginBottom: '2px' }}>{label}</span>
+      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#181e1b' }}>{value || 'N/A'}</span>
     </div>
   );
 }

@@ -132,6 +132,7 @@ export default function App() {
     setFormData(prev => ({
       ...prev,
       category: cat,
+      stayType: cat === 'Bachelor Room' ? '' : (prev.stayType || 'Long Stay'),
       categoryDetails: defaultCategoryDetails
     }));
   };
@@ -166,8 +167,14 @@ export default function App() {
       return;
     }
 
+    // Default fallback image if no photo provided
+    const payload = {
+      ...formData,
+      imageUrl: formData.imageUrl?.trim() || '/lampose-logo-splash.png'
+    };
+
     setSubmitting(true);
-    const response = await onboardProperty(formData);
+    const response = await onboardProperty(payload);
     setSubmitting(false);
 
     if (response && response.success) {
@@ -205,7 +212,7 @@ export default function App() {
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} counts={categoryCounts} />
 
       {/* Main App Workspace */}
-      <main style={{ flex: 1, padding: '16px 0 40px' }}>
+      <main className="main-workspace">
         <div className="container">
 
           {/* ==================================================== */}
@@ -291,18 +298,19 @@ export default function App() {
               <div style={{
                 marginBottom: '16px',
                 textAlign: 'center',
-                padding: '16px 14px',
+                padding: '20px 16px',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid var(--border-gold)'
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.02)'
               }}>
-                <span className="badge badge-pg" style={{ marginBottom: '6px', background: 'rgba(216, 153, 62, 0.25)', color: '#f5b963', borderColor: 'rgba(216, 153, 62, 0.5)' }}>
+                <span className="badge" style={{ marginBottom: '8px', background: '#eaf3ed', color: '#45855a', border: '1px solid #c2e2cc' }}>
                   LAMPOSE ONBOARDING PORTAL
                 </span>
-                <h1 style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 800, color: '#ffffff', marginBottom: '4px' }}>
+                <h1 style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 800, color: '#181e1b', marginBottom: '4px' }}>
                   Onboard Your Accommodation
                 </h1>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-sub)' }}>
+                <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
                   Collect name, place, owner name, owner mobile number & category-specific attributes for PGs, Hostels, Dormitories, or Bachelor Rooms.
                 </p>
               </div>
