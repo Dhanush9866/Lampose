@@ -1,5 +1,5 @@
-import React from 'react';
-import { IndianRupee, Clock, Calendar, Check, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { IndianRupee, Clock, Calendar, Check, Sparkles, Upload, Loader2, CloudUpload, Image as ImageIcon, AlertCircle, X, CheckCircle2 } from 'lucide-react';
 
 const PRESET_IMAGES = [
   { label: 'Cozy Room', url: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80' },
@@ -13,6 +13,7 @@ const ALL_AMENITIES = [
   'WiFi',
   'AC',
   'Food',
+  'Elevator / Lift',
   'TV',
   'Housekeeping',
   'Power Backup',
@@ -25,7 +26,14 @@ const ALL_AMENITIES = [
   'Kitchen Setup'
 ];
 
+const DEFAULT_FALLBACK_SPLASH = '/lampose-logo-splash.png';
+
 export default function PricingAmenitiesStep({ formData, onChange, errors = {} }) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadStage, setUploadStage] = useState('');
+  const [uploadError, setUploadError] = useState('');
+  const [isCloudinaryUrl, setIsCloudinaryUrl] = useState(false);
+
   const selectedAmenities = Array.isArray(formData.amenities) ? formData.amenities : [];
   const currentStayType = formData.stayType === 'Short Stay' ? 'Short Stay' : 'Long Stay';
 
@@ -46,157 +54,265 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
     onChange({ target: { name: 'stayType', value: type } });
   };
 
-  const isShortStay = currentStayType === 'Short Stay';
-  const isLongStay = currentStayType === 'Long Stay';
+  const isBachelor = formData.category === 'Bachelor Room';
+  const isShortStay = currentStayType === 'Short Stay' && !isBachelor;
+  const isLongStay = (currentStayType === 'Long Stay' || isBachelor) && !isShortStay;
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    // Reset file input value so same file can be re-selected if needed
+    e.target.value = '';
+
+    setUploading(true);
+    setUploadError('');
+    setUploadStage('Uploading photo to server...');
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', file);
+
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/properties';
+      const uploadEndpoint = API_BASE.replace(/\/properties\/?$/, '/properties/upload-image');
+
+      setUploadStage('Storing in Cloudinary & generating secure link...');
+
+      const response = await fetch(uploadEndpoint, {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.url) {
+        setUploadStage('✓ Cloudinary Upload Complete!');
+        onChange({ target: { name: 'imageUrl', value: data.url } });
+        setIsCloudinaryUrl(true);
+      } else {
+        setUploadError(data.error || data.message || 'Failed to upload photo to Cloudinary.');
+      }
+    } catch (err) {
+      console.error('Cloudinary upload error:', err);
+      setUploadError('Failed to connect to image upload service. Please check server connection.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleClearImage = () => {
+    onChange({ target: { name: 'imageUrl', value: '' } });
+    setIsCloudinaryUrl(false);
+    setUploadStage('');
+    setUploadError('');
+  };
+
+  const hasCustomImage = Boolean(formData.imageUrl && formData.imageUrl.trim());
 
   return (
     <div className="animate-fade-in" style={{ marginBottom: '28px' }}>
-      <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <IndianRupee size={20} color="#D8993E" />
-        <span>3. Stay Duration, Pricing & Amenities</span>
+      <h3 style={{ fontSize: '1.2rem', color: '#181e1b', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <IndianRupee size={20} color="#45855a" />
+        <span>{isBachelor ? '3. Pricing & Amenities' : '3. Stay Duration, Pricing & Amenities'}</span>
       </h3>
 
-      {/* ==================================================== */}
-      {/* STAY TYPE SELECTION (Short Stay 1-7 days / Long Stay 1+ month) */}
-      {/* ==================================================== */}
-      <div style={{
-        padding: '20px',
-        borderRadius: 'var(--radius-md)',
-        background: 'rgba(255, 255, 255, 0.05)',
-        border: '1px solid var(--border-gold)',
-        marginBottom: '20px'
-      }}>
-        <label className="form-label" style={{ fontSize: '1rem', color: '#ffffff', marginBottom: '12px' }}>
-          Are you looking for / Offering Stay Type *
-        </label>
+      {/* STAY TYPE SELECTION (For PG, Hostel, Dormitory) */}
+      {!isBachelor ? (
+        <div style={{
+          padding: '20px',
+          borderRadius: '16px',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          marginBottom: '20px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+        }}>
+          <label className="form-label" style={{ fontSize: '0.95rem', color: '#181e1b', fontWeight: 700, marginBottom: '14px' }}>
+            Are you looking for / Offering Stay Type *
+          </label>
 
-        {/* 2 Main Stay Type Buttons (Short Stay vs Long Stay) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '18px' }}>
-          <button
-            type="button"
-            className={`btn ${isShortStay ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '12px 16px', fontSize: '0.9rem', background: isShortStay ? '#D8993E' : 'rgba(255,255,255,0.1)' }}
-            onClick={() => setStayType('Short Stay')}
-          >
-            <Clock size={16} />
-            <span>Short Stay (1-7 Days)</span>
-          </button>
+          {/* 2 Main Stay Type Buttons (Short Stay vs Long Stay) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '18px' }}>
+            <button
+              type="button"
+              className="btn"
+              style={{
+                padding: '12px 16px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                borderRadius: '12px',
+                background: isShortStay ? '#45855a' : '#ffffff',
+                color: isShortStay ? '#ffffff' : '#181e1b',
+                border: isShortStay ? '1px solid #45855a' : '1px solid #cbd5e1',
+                boxShadow: isShortStay ? '0 4px 14px rgba(69, 133, 90, 0.3)' : '0 2px 6px rgba(0,0,0,0.02)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+              onClick={() => setStayType('Short Stay')}
+            >
+              <Clock size={16} color={isShortStay ? '#ffffff' : '#45855a'} />
+              <span>Short Stay (1-7 Days)</span>
+            </button>
 
-          <button
-            type="button"
-            className={`btn ${isLongStay ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '12px 16px', fontSize: '0.9rem', background: isLongStay ? '#D8993E' : 'rgba(255,255,255,0.1)' }}
-            onClick={() => setStayType('Long Stay')}
-          >
-            <Calendar size={16} />
-            <span>Long Stay (1+ Month)</span>
-          </button>
+            <button
+              type="button"
+              className="btn"
+              style={{
+                padding: '12px 16px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                borderRadius: '12px',
+                background: isLongStay ? '#45855a' : '#ffffff',
+                color: isLongStay ? '#ffffff' : '#181e1b',
+                border: isLongStay ? '1px solid #45855a' : '1px solid #cbd5e1',
+                boxShadow: isLongStay ? '0 4px 14px rgba(69, 133, 90, 0.3)' : '0 2px 6px rgba(0,0,0,0.02)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+              onClick={() => setStayType('Long Stay')}
+            >
+              <Calendar size={16} color={isLongStay ? '#ffffff' : '#45855a'} />
+              <span>Long Stay (1+ Month)</span>
+            </button>
+          </div>
+
+          {/* Short Stay Configuration */}
+          {isShortStay && (
+            <div className="animate-fade-in" style={{
+              padding: '16px',
+              borderRadius: '12px',
+              background: '#f0f7f2',
+              border: '1px solid #c2e2cc'
+            }}>
+              <h4 style={{ fontSize: '0.92rem', color: '#181e1b', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Clock size={16} color="#45855a" />
+                <span>Short Stay Configuration (1 - 7 Days)</span>
+              </h4>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ color: '#181e1b' }}>Duration Option</label>
+                  <select
+                    name="shortStayDuration"
+                    className="form-select"
+                    value={formData.shortStayDuration || '1-7 Days'}
+                    onChange={onChange}
+                  >
+                    <option value="1 Day">1 Day</option>
+                    <option value="2 Days">2 Days</option>
+                    <option value="3 Days">3 Days</option>
+                    <option value="4 Days">4 Days</option>
+                    <option value="5 Days">5 Days</option>
+                    <option value="6 Days">6 Days</option>
+                    <option value="7 Days">7 Days (1 Week)</option>
+                    <option value="1-7 Days">Flexible (1-7 Days)</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ color: '#181e1b' }}>Price per Day (₹) *</label>
+                  <input
+                    type="number"
+                    name="dailyPrice"
+                    placeholder="e.g. 450.00"
+                    value={formData.dailyPrice || ''}
+                    onChange={(e) => {
+                      onChange(e);
+                      onChange({ target: { name: 'rent', value: e.target.value } });
+                    }}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Long Stay Configuration */}
+          {isLongStay && (
+            <div className="animate-fade-in" style={{
+              padding: '16px',
+              borderRadius: '12px',
+              background: '#f0f7f2',
+              border: '1px solid #c2e2cc'
+            }}>
+              <h4 style={{ fontSize: '0.92rem', color: '#181e1b', fontWeight: 700, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Calendar size={16} color="#45855a" />
+                <span>Long Stay Configuration (Starting from 1 Month)</span>
+              </h4>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ color: '#181e1b' }}>Minimum Duration</label>
+                  <select
+                    name="longStayDuration"
+                    className="form-select"
+                    value={formData.longStayDuration || '1 Month+'}
+                    onChange={onChange}
+                  >
+                    <option value="1 Month">1 Month</option>
+                    <option value="3 Months">3 Months</option>
+                    <option value="6 Months">6 Months</option>
+                    <option value="1 Year">1 Year</option>
+                    <option value="1 Month+">1 Month & Above</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ color: '#181e1b' }}>Price per Month (₹) *</label>
+                  <input
+                    type="number"
+                    name="monthlyPrice"
+                    placeholder="e.g. 8500.00"
+                    value={formData.monthlyPrice || ''}
+                    onChange={(e) => {
+                      onChange(e);
+                      onChange({ target: { name: 'rent', value: e.target.value } });
+                    }}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Dynamic Fields for Short Stay (1-7 Days) */}
-        {isShortStay && (
-          <div className="animate-fade-in" style={{
-            padding: '16px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'rgba(216, 153, 62, 0.15)',
-            border: '1px solid rgba(216, 153, 62, 0.35)'
-          }}>
-            <h4 style={{ fontSize: '0.92rem', color: '#f7c784', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Clock size={16} />
-              <span>Short Stay Configuration (1 - 7 Days)</span>
-            </h4>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Duration Option</label>
-                <select
-                  name="shortStayDuration"
-                  className="form-select"
-                  value={formData.shortStayDuration || '1-7 Days'}
-                  onChange={onChange}
-                >
-                  <option value="1 Day">1 Day</option>
-                  <option value="2 Days">2 Days</option>
-                  <option value="3 Days">3 Days</option>
-                  <option value="4 Days">4 Days</option>
-                  <option value="5 Days">5 Days</option>
-                  <option value="6 Days">6 Days</option>
-                  <option value="7 Days">7 Days (1 Week)</option>
-                  <option value="1-7 Days">Flexible (1-7 Days)</option>
-                </select>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Price per Day (₹) *</label>
-                <input
-                  type="number"
-                  name="dailyPrice"
-                  placeholder="e.g. 450.00"
-                  value={formData.dailyPrice || ''}
-                  onChange={(e) => {
-                    onChange(e);
-                    onChange({ target: { name: 'rent', value: e.target.value } });
-                  }}
-                  className="form-input"
-                />
-              </div>
-            </div>
+      ) : (
+        /* Direct Monthly Pricing Card for Bachelor Rooms */
+        <div style={{
+          padding: '20px',
+          borderRadius: '16px',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          marginBottom: '20px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+        }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label" style={{ fontSize: '1rem', color: '#181e1b', fontWeight: 700, marginBottom: '8px' }}>
+              Monthly Rent Amount (₹) *
+            </label>
+            <input
+              type="number"
+              name="monthlyPrice"
+              placeholder="e.g. 12000.00"
+              value={formData.monthlyPrice || formData.rent || ''}
+              onChange={(e) => {
+                onChange(e);
+                onChange({ target: { name: 'rent', value: e.target.value } });
+              }}
+              className="form-input"
+            />
           </div>
-        )}
-
-        {/* Dynamic Fields for Long Stay (Starting from 1 Month) */}
-        {isLongStay && (
-          <div className="animate-fade-in" style={{
-            padding: '16px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'rgba(42, 89, 62, 0.25)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}>
-            <h4 style={{ fontSize: '0.92rem', color: '#ffffff', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Calendar size={16} color="#D8993E" />
-              <span>Long Stay Configuration (Starting from 1 Month)</span>
-            </h4>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Minimum Duration</label>
-                <select
-                  name="longStayDuration"
-                  className="form-select"
-                  value={formData.longStayDuration || '1 Month+'}
-                  onChange={onChange}
-                >
-                  <option value="1 Month">1 Month</option>
-                  <option value="3 Months">3 Months</option>
-                  <option value="6 Months">6 Months</option>
-                  <option value="1 Year">1 Year</option>
-                  <option value="1 Month+">1 Month & Above</option>
-                </select>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Price per Month (₹) *</label>
-                <input
-                  type="number"
-                  name="monthlyPrice"
-                  placeholder="e.g. 8500.00"
-                  value={formData.monthlyPrice || ''}
-                  onChange={(e) => {
-                    onChange(e);
-                    onChange({ target: { name: 'rent', value: e.target.value } });
-                  }}
-                  className="form-input"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
         {/* Security Deposit */}
         <div className="form-group">
-          <label className="form-label" htmlFor="depositInput">
+          <label className="form-label" htmlFor="depositInput" style={{ color: '#181e1b' }}>
             Security Deposit (₹)
           </label>
           <input
@@ -212,7 +328,7 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
 
         {/* Address */}
         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label className="form-label" htmlFor="addressInput">
+          <label className="form-label" htmlFor="addressInput" style={{ color: '#181e1b' }}>
             Complete Street Address
           </label>
           <input
@@ -226,56 +342,216 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
           />
         </div>
 
-        {/* Image URL */}
+        {/* ==================================================== */}
+        {/* CLOUDINARY IMAGE UPLOADER SECTION (OPTIONAL WITH FALLBACK) */}
+        {/* ==================================================== */}
         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label className="form-label">
-            Property Image Photo URL
+          <label className="form-label" style={{ color: '#181e1b', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <CloudUpload size={18} color="#45855a" />
+              <span>Property Photo</span>
+              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>(Optional)</span>
+            </span>
+            <span style={{ fontSize: '0.75rem', color: '#45855a', fontWeight: 600, background: '#eaf3ed', padding: '2px 8px', borderRadius: '10px' }}>
+              ☁️ Cloudinary Auto-Storage
+            </span>
           </label>
-          <input
-            type="url"
-            name="imageUrl"
-            placeholder="https://images.unsplash.com/photo-..."
-            value={formData.imageUrl || ''}
-            onChange={onChange}
-            className="form-input"
-            style={{ marginBottom: '10px' }}
-          />
 
-          {/* Preset Image Suggestions */}
+          {/* Upload Dropzone */}
+          <div 
+            style={{
+              border: uploading ? '2px solid #45855a' : '2px dashed #c2e2cc',
+              borderRadius: '16px',
+              padding: '22px 16px',
+              textAlign: 'center',
+              background: uploading ? '#f0f7f2' : '#f8faf8',
+              cursor: uploading ? 'wait' : 'pointer',
+              transition: 'all 0.25s ease',
+              marginBottom: '12px',
+              position: 'relative'
+            }}
+            onClick={() => !uploading && document.getElementById('cloudinaryFileInput').click()}
+          >
+            <input
+              id="cloudinaryFileInput"
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
+              disabled={uploading}
+            />
+
+            {uploading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                <Loader2 size={32} color="#45855a" className="animate-spin" />
+                <div>
+                  <span style={{ fontSize: '0.92rem', color: '#45855a', fontWeight: 700, display: 'block' }}>
+                    {uploadStage || 'Uploading photo to Cloudinary...'}
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    Please wait while your image is stored and CDN link is generated...
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <div style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  background: '#eaf3ed',
+                  color: '#45855a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Upload size={22} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#181e1b' }}>
+                    Click to select photo or drag & drop image
+                  </span>
+                  <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                    Supports JPG, PNG, WEBP. Stored instantly on Cloudinary.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Error Notification */}
+          {uploadError && (
+            <div style={{ padding: '10px 14px', borderRadius: '10px', background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.84rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertCircle size={16} flexShrink={0} />
+              <span>{uploadError}</span>
+            </div>
+          )}
+
+          {/* Active Image Status or Informational Fallback Warning */}
+          {hasCustomImage ? (
+            /* Uploaded Image Preview Box */
+            <div style={{
+              padding: '14px',
+              borderRadius: '14px',
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '14px',
+              marginBottom: '14px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                <img
+                  src={formData.imageUrl}
+                  alt="Property Preview"
+                  style={{ width: '84px', height: '58px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #cbd5e1', flexShrink: 0 }}
+                  onError={(e) => { e.target.src = DEFAULT_FALLBACK_SPLASH; }}
+                />
+                <div style={{ overflow: 'hidden' }}>
+                  <span style={{ fontSize: '0.85rem', color: '#45855a', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <CheckCircle2 size={15} />
+                    {isCloudinaryUrl || formData.imageUrl.includes('cloudinary') ? 'Uploaded to Cloudinary CDN' : 'Custom Image Set'}
+                  </span>
+                  <p style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '340px' }}>
+                    {formData.imageUrl}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleClearImage}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  background: '#f1f5f2',
+                  border: '1px solid #e2e8f0',
+                  color: '#64748b',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  flexShrink: 0
+                }}
+              >
+                <X size={14} />
+                <span>Remove</span>
+              </button>
+            </div>
+          ) : (
+            /* Warning / Informational Fallback Notice */
+            <div style={{
+              padding: '12px 14px',
+              borderRadius: '12px',
+              background: '#f8faf8',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '14px'
+            }}>
+              <img
+                src={DEFAULT_FALLBACK_SPLASH}
+                alt="Lampose Splash Fallback"
+                style={{ width: '64px', height: '44px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', flexShrink: 0 }}
+              />
+              <div style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: '1.4' }}>
+                <span style={{ fontWeight: 600, color: '#181e1b', display: 'block' }}>
+                  No custom photo uploaded (Optional)
+                </span>
+                <span>If you proceed without uploading, the default <strong>Lampose Brand Splash Photo</strong> will be used automatically.</span>
+              </div>
+            </div>
+          )}
+
+          {/* Manual URL Input */}
+          <div style={{ marginBottom: '10px' }}>
+            <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+              Or enter Photo URL directly:
+            </span>
+            <input
+              type="url"
+              name="imageUrl"
+              placeholder="https://res.cloudinary.com/... or https://images.unsplash.com/..."
+              value={formData.imageUrl || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                setIsCloudinaryUrl(val.includes('cloudinary.com'));
+                onChange(e);
+              }}
+              className="form-input"
+            />
+          </div>
+
+          {/* Quick Presets */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Quick Select Presets:</span>
+            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Quick Select Presets:</span>
             {PRESET_IMAGES.map((img, i) => (
               <button
                 key={i}
                 type="button"
                 className="btn btn-secondary"
-                style={{ padding: '4px 10px', fontSize: '0.75rem', borderRadius: '12px' }}
-                onClick={() => onChange({ target: { name: 'imageUrl', value: img.url } })}
+                style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '14px', background: '#ffffff', color: '#181e1b', border: '1px solid #cbd5e1' }}
+                onClick={() => {
+                  setIsCloudinaryUrl(false);
+                  onChange({ target: { name: 'imageUrl', value: img.url } });
+                }}
               >
-                <Sparkles size={12} color="#D8993E" />
+                <Sparkles size={12} color="#45855a" />
                 {img.label}
               </button>
             ))}
           </div>
-
-          {/* Image Preview */}
-          {formData.imageUrl && (
-            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img
-                src={formData.imageUrl}
-                alt="Property Preview"
-                style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-glass)' }}
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-              <span style={{ fontSize: '0.8rem', color: '#4ade80' }}>✓ Image preview ready</span>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Amenities Grid */}
       <div className="form-group">
-        <label className="form-label" style={{ marginBottom: '12px' }}>
+        <label className="form-label" style={{ color: '#181e1b', fontWeight: 700, marginBottom: '12px' }}>
           Key Amenities Included
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '8px' }}>
@@ -286,13 +562,14 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
                 key={amenity}
                 onClick={() => toggleAmenity(amenity)}
                 style={{
-                  padding: '8px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  background: isChecked ? 'rgba(216, 153, 62, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                  border: isChecked ? '1px solid #D8993E' : '1px solid var(--border-glass)',
-                  color: isChecked ? '#ffffff' : 'var(--text-sub)',
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  background: isChecked ? '#eaf3ed' : '#ffffff',
+                  border: isChecked ? '1px solid #45855a' : '1px solid #e2e8f0',
+                  color: isChecked ? '#181e1b' : '#475569',
+                  fontWeight: isChecked ? 600 : 400,
                   cursor: 'pointer',
-                  fontSize: '0.82rem',
+                  fontSize: '0.84rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -300,10 +577,11 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
                 }}
               >
                 <div style={{
-                  width: '16px',
-                  height: '16px',
+                  width: '18px',
+                  height: '18px',
                   borderRadius: '4px',
-                  background: isChecked ? '#D8993E' : 'rgba(255,255,255,0.1)',
+                  background: isChecked ? '#45855a' : '#f1f5f2',
+                  border: isChecked ? 'none' : '1px solid #cbd5e1',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'

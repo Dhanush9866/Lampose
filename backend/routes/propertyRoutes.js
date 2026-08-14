@@ -4,10 +4,61 @@ const Property = require('../models/Property');
 const { getIsInMemory, getMemoryStore } = require('../config/db');
 const sampleProperties = require('../seedData');
 
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+
 let inMemoryStore = getMemoryStore();
 if (inMemoryStore.length === 0) {
   inMemoryStore.push(...sampleProperties);
 }
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+// @route   POST /api/properties/upload-image
+// @desc    Upload image to Cloudinary and return secure URL
+router.post('/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    let dataUri;
+    if (req.file) {
+      const mime = req.file.mimetype || 'image/jpeg';
+      dataUri = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
+    } else if (req.body && req.body.image) {
+      dataUri = req.body.image.startsWith('data:')
+        ? req.body.image
+        : `data:image/jpeg;base64,${req.body.image}`;
+    } else {
+      return res.status(400).json({ success: false, error: 'No image file provided' });
+    }
+
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'ozbu2jhp';
+    const apiKey = process.env.CLOUDINARY_API_KEY || '785979326795591';
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || '1EDPPk-MX49n0nZogTk4bgrJfCI';
+
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret
+    });
+
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: 'lampose_accommodations',
+      resource_type: 'auto'
+    });
+
+    res.json({
+      success: true,
+      message: 'Image uploaded to Cloudinary successfully!',
+      url: result.secure_url,
+      public_id: result.public_id
+    });
+  } catch (err) {
+    console.error('Cloudinary Upload Error:', err);
+    res.status(500).json({ success: false, error: 'Cloudinary Upload Failed', message: err.message });
+  }
+});
 
 // @route   GET /api/properties
 // @desc    Get all properties (with optional filter by category, search, place, stayType)

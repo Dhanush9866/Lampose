@@ -17,25 +17,25 @@ const CATEGORY_OPTIONS = [
     icon: Building2
   },
   {
-    id: 'Dormitory',
-    title: 'Dormitory / Pods',
-    subtitle: 'Bunk beds, daily rates, personal lockers & shared bath',
-    badge: 'Budget',
-    icon: BedDouble
-  },
-  {
     id: 'Bachelor Room',
     title: 'Bachelor Room / Flat',
     subtitle: '1BHK/2BHK flat or room for male/female bachelors',
     badge: 'Private',
     icon: Users
+  },
+  {
+    id: 'Dormitory',
+    title: 'Dormitory / Pods',
+    subtitle: 'Bunk beds, daily rates, personal lockers & shared bath',
+    badge: 'Budget',
+    icon: BedDouble
   }
 ];
 
 export default function CategorySelector({ selectedCategory, onSelectCategory }) {
   return (
     <div style={{ marginBottom: '24px' }}>
-      <label className="form-label" style={{ fontSize: '1rem', color: '#ffffff', marginBottom: '12px' }}>
+      <label className="form-label" style={{ fontSize: '1rem', color: '#181e1b', marginBottom: '12px' }}>
         1. Select Accommodation Category *
       </label>
 
@@ -52,15 +52,15 @@ export default function CategorySelector({ selectedCategory, onSelectCategory })
               style={{
                 cursor: 'pointer',
                 position: 'relative',
-                background: isSelected ? 'rgba(216, 153, 62, 0.18)' : 'rgba(255, 255, 255, 0.05)',
-                borderColor: isSelected ? '#D8993E' : 'var(--border-glass)',
-                boxShadow: isSelected ? '0 8px 24px rgba(216, 153, 62, 0.25)' : 'none',
+                background: isSelected ? '#eaf3ed' : '#ffffff',
+                borderColor: isSelected ? '#45855a' : '#e2e8f0',
+                boxShadow: isSelected ? '0 6px 20px rgba(69, 133, 90, 0.15)' : 'none',
                 transition: 'all 0.25s ease'
               }}
             >
               {isSelected && (
                 <div className="category-check" style={{ position: 'absolute', top: '10px', right: '10px' }}>
-                  <CheckCircle2 size={18} color="#D8993E" />
+                  <CheckCircle2 size={18} color="#45855a" />
                 </div>
               )}
 
@@ -69,8 +69,8 @@ export default function CategorySelector({ selectedCategory, onSelectCategory })
                   width: '38px',
                   height: '38px',
                   borderRadius: '10px',
-                  background: isSelected ? '#D8993E' : 'rgba(255, 255, 255, 0.1)',
-                  color: isSelected ? '#ffffff' : 'var(--text-sub)',
+                  background: isSelected ? '#45855a' : '#f1f5f2',
+                  color: isSelected ? '#ffffff' : '#64748b',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -81,9 +81,9 @@ export default function CategorySelector({ selectedCategory, onSelectCategory })
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff' }}>{cat.title}</h4>
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#181e1b' }}>{cat.title}</h4>
                   </div>
-                  <p className="category-desc" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.3' }}>
+                  <p className="category-desc" style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: '1.3' }}>
                     {cat.subtitle}
                   </p>
                 </div>

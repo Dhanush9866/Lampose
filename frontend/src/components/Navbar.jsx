@@ -4,78 +4,53 @@ import { PlusCircle, LayoutGrid } from 'lucide-react';
 export default function Navbar({ activeTab, setActiveTab }) {
   return (
     <header className="site-header" style={{
-      position: 'sticky',
+      position: 'fixed',
       top: 0,
-      zIndex: 100,
-      background: '#2a593e',
-      borderBottom: 'none'
+      left: 0,
+      right: 0,
+      width: '100%',
+      zIndex: 1000,
+      background: '#ffffff',
+      borderBottom: '1px solid #e2e8f0',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
     }}>
       <div className="header-container header-content">
-        {/* Brand Logo - Lampose enlarged */}
+        {/* Brand Logo - Clean dark typography */}
         <div 
           onClick={() => setActiveTab('listings')}
           className="brand-logo"
           style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{
-              fontFamily: "'Outfit', 'Inter', sans-serif",
-              fontSize: '1.95rem',
-              fontWeight: 800,
-              color: '#F9F7F2',
-              letterSpacing: '-0.02em'
-            }}>
-              Lam
-            </span>
-            <span style={{
-              fontFamily: "'Outfit', 'Inter', sans-serif",
-              fontSize: '1.95rem',
-              fontWeight: 800,
-              color: '#D8993E',
-              letterSpacing: '-0.02em'
-            }}>
-              pose
-            </span>
-          </div>
-
-          {/* Subtitle Badge */}
-          <span className="portal-badge" style={{
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            padding: '3px 9px',
-            borderRadius: '10px',
-            background: 'rgba(216, 153, 62, 0.2)',
-            color: '#f5b963',
-            border: '1px solid rgba(216, 153, 62, 0.4)',
-            letterSpacing: '0.04em',
-            whiteSpace: 'nowrap'
-          }}>
-            PORTAL
-          </span>
+          <img 
+            src="/lampose-logo-splash.png" 
+            alt="lampose logo" 
+            className="brand-logo-img"
+          />
         </div>
 
-        {/* Navigation Action Buttons enlarged */}
-        <div className="header-nav" style={{ gap: '12px' }}>
+        {/* Navigation Action Buttons */}
+        <div className="header-nav">
           <button
             onClick={() => setActiveTab('listings')}
-            className={`btn nav-btn ${activeTab === 'listings' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '10px 22px', fontSize: '0.92rem' }}
+            className="nav-btn"
+            style={{ 
+              background: activeTab === 'listings' ? '#f1f5f2' : '#ffffff',
+              borderColor: activeTab === 'listings' ? '#cbd5e1' : '#e2e8f0',
+              fontWeight: 600
+            }}
           >
-            <LayoutGrid size={17} />
+            <LayoutGrid size={16} />
             <span>Explore</span>
           </button>
 
           <button
             onClick={() => setActiveTab('onboard')}
-            className={`btn nav-btn ${activeTab === 'onboard' ? 'btn-primary' : 'btn-secondary'}`}
+            className="nav-btn nav-btn-primary"
             style={{ 
-              padding: '10px 22px',
-              fontSize: '0.92rem',
-              background: activeTab === 'onboard' ? '#D8993E' : 'rgba(255, 255, 255, 0.12)',
-              color: '#ffffff'
+              fontWeight: 600
             }}
           >
-            <PlusCircle size={17} />
+            <PlusCircle size={16} />
             <span>Onboard</span>
           </button>
         </div>

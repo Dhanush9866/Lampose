@@ -8,57 +8,62 @@ export default function FormSuccessModal({ property, onViewListings, onResetForm
   const displayPrice = rent || monthlyPrice || dailyPrice || 0;
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 300,
-      background: 'rgba(18, 42, 29, 0.88)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px'
-    }} className="animate-fade-in">
-      <div className="glass-card" style={{
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) onViewListings(); }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        overflowY: 'auto'
+      }} 
+      className="animate-fade-in"
+    >
+      <div style={{
         maxWidth: '520px',
         width: '100%',
         padding: '32px 24px',
         textAlign: 'center',
-        background: '#2A593E',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid rgba(216, 153, 62, 0.4)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+        background: '#ffffff',
+        borderRadius: '24px',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
       }}>
         {/* Success Animated Badge */}
         <div style={{
           width: '64px',
           height: '64px',
           borderRadius: '50%',
-          background: 'rgba(216, 153, 62, 0.18)',
-          border: '2px solid #D8993E',
+          background: '#eaf3ed',
+          border: '2px solid #45855a',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           margin: '0 auto 16px',
-          color: '#D8993E'
+          color: '#45855a'
         }}>
           <CheckCircle2 size={36} />
         </div>
 
-        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#ffffff', marginBottom: '6px' }}>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#181e1b', marginBottom: '6px' }}>
           Property Onboarded Successfully!
         </h2>
-        <p style={{ fontSize: '0.88rem', color: 'var(--text-sub)', marginBottom: '20px' }}>
+        <p style={{ fontSize: '0.88rem', color: '#64748b', marginBottom: '20px' }}>
           Your accommodation listing has been saved directly to MongoDB Atlas and is now live!
         </p>
 
         {/* Property Brief Summary Box */}
         <div style={{
           padding: '16px',
-          borderRadius: 'var(--radius-md)',
-          background: 'rgba(255, 255, 255, 0.05)',
-          border: '1px solid var(--border-glass)',
+          borderRadius: '16px',
+          background: '#f8faf8',
+          border: '1px solid #e2e8f0',
           textAlign: 'left',
           marginBottom: '24px',
           display: 'flex',
@@ -66,24 +71,24 @@ export default function FormSuccessModal({ property, onViewListings, onResetForm
           gap: '8px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#D8993E', color: '#ffffff' }}>
-              {category} • {stayType || 'Onboarded'}
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '10px', background: '#45855a', color: '#ffffff' }}>
+              {category} {stayType ? `• ${stayType}` : ''}
             </span>
-            <span style={{ fontSize: '1rem', fontWeight: 800, color: '#D8993E' }}>
+            <span style={{ fontSize: '1rem', fontWeight: 800, color: '#45855a' }}>
               ₹{displayPrice} {stayType === 'Short Stay' ? '/day' : '/mo'}
             </span>
           </div>
 
-          <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff' }}>{name}</h4>
+          <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#181e1b' }}>{name}</h4>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: 'var(--text-sub)' }}>
-            <MapPin size={14} color="#D8993E" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: '#64748b' }}>
+            <MapPin size={14} color="#45855a" />
             <span>{place}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.8rem', color: 'var(--text-muted)', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <span><strong style={{ color: '#ffffff' }}>Owner:</strong> {ownerName}</span>
-            <span><strong style={{ color: '#ffffff' }}>Contact:</strong> {ownerMobile}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.8rem', color: '#64748b', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
+            <span><strong style={{ color: '#181e1b' }}>Owner:</strong> {ownerName}</span>
+            <span><strong style={{ color: '#181e1b' }}>Contact:</strong> {ownerMobile}</span>
           </div>
         </div>
 
@@ -92,7 +97,7 @@ export default function FormSuccessModal({ property, onViewListings, onResetForm
           <button
             onClick={onViewListings}
             className="btn btn-primary"
-            style={{ padding: '12px 24px', background: '#D8993E' }}
+            style={{ padding: '12px 24px', background: '#45855a' }}
           >
             <span>View Live Listings</span>
             <ArrowRight size={16} />

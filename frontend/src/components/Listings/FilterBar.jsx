@@ -5,8 +5,8 @@ const CATEGORIES = [
   { id: 'All', label: 'All Categories', icon: Home },
   { id: 'PG', label: 'PGs', icon: Building2 },
   { id: 'Hostel', label: 'Hostels', icon: Building2 },
-  { id: 'Dormitory', label: 'Dormitories', icon: BedDouble },
-  { id: 'Bachelor Room', label: 'Bachelor Rooms', icon: Users }
+  { id: 'Bachelor Room', label: 'Bachelor Rooms', icon: Users },
+  { id: 'Dormitory', label: 'Dormitories', icon: BedDouble }
 ];
 
 export default function FilterBar({
@@ -18,87 +18,96 @@ export default function FilterBar({
 }) {
   return (
     <div style={{ marginBottom: '24px' }}>
-      {/* Search & Category Filter Header Container */}
-      <div className="glass-card" style={{ padding: '16px 20px', borderRadius: 'var(--radius-md)' }}>
-        
-        {/* Top Search Input Row */}
+      {/* Search Bar Container */}
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
+        padding: '10px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '16px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.02)'
+      }}>
+        <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+          <Search
+            size={18}
+            color="#64748b"
+            style={{ marginRight: '12px', flexShrink: 0 }}
+          />
+          <input
+            type="text"
+            placeholder="Search property name, location (e.g. Koramangala), owner..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            style={{
+              width: '100%',
+              border: 'none',
+              background: 'transparent',
+              outline: 'none',
+              fontSize: '0.92rem',
+              color: '#181e1b',
+              fontFamily: 'inherit'
+            }}
+          />
+        </div>
+
         <div style={{
+          fontSize: '0.85rem',
+          color: '#64748b',
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          marginBottom: '16px'
+          gap: '6px',
+          flexShrink: 0,
+          paddingLeft: '16px',
+          borderLeft: '1px solid #f1f5f2'
         }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search
-              size={18}
-              color="#D8993E"
-              style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
-            />
-            <input
-              type="text"
-              placeholder="Search property name, location (e.g. Koramangala), owner..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="form-input"
+          <SlidersHorizontal size={16} color="#45855a" />
+          <span>Showing <strong style={{ color: '#181e1b', fontWeight: 700 }}>{totalCount}</strong> Properties</span>
+        </div>
+      </div>
+
+      {/* Category Tabs Pill Row */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        overflowX: 'auto',
+        paddingBottom: '4px',
+        msOverflowStyle: 'none',
+        scrollbarWidth: 'none'
+      }}>
+        {CATEGORIES.map((cat) => {
+          const IconComponent = cat.icon;
+          const isSelected = selectedCategory === cat.id;
+
+          return (
+            <button
+              key={cat.id}
+              onClick={() => onCategoryChange(cat.id)}
+              className="btn"
               style={{
-                paddingLeft: '44px',
-                borderRadius: '30px',
-                background: 'rgba(25, 54, 38, 0.85)',
-                borderColor: 'rgba(255, 255, 255, 0.15)'
+                padding: '8px 18px',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: isSelected ? 600 : 500,
+                whiteSpace: 'nowrap',
+                background: isSelected ? '#45855a' : '#ffffff',
+                color: isSelected ? '#ffffff' : '#181e1b',
+                border: isSelected ? 'none' : '1px solid #e2e8f0',
+                boxShadow: isSelected ? '0 4px 12px rgba(69, 133, 90, 0.25)' : '0 2px 6px rgba(0,0,0,0.02)',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
-            />
-          </div>
-
-          <div style={{
-            fontSize: '0.85rem',
-            color: 'var(--text-sub)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            flexShrink: 0
-          }}>
-            <SlidersHorizontal size={16} color="#D8993E" />
-            <span>Showing <strong style={{ color: '#ffffff' }}>{totalCount}</strong> Properties</span>
-          </div>
-        </div>
-
-        {/* Category Tabs Scrollable Row */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          overflowX: 'auto',
-          paddingBottom: '4px',
-          msOverflowStyle: 'none',
-          scrollbarWidth: 'none'
-        }}>
-          {CATEGORIES.map((cat) => {
-            const IconComponent = cat.icon;
-            const isSelected = selectedCategory === cat.id;
-
-            return (
-              <button
-                key={cat.id}
-                onClick={() => onCategoryChange(cat.id)}
-                className="btn"
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem',
-                  whiteSpace: 'nowrap',
-                  background: isSelected ? '#D8993E' : 'rgba(255, 255, 255, 0.08)',
-                  color: isSelected ? '#ffffff' : 'var(--text-sub)',
-                  border: isSelected ? '1px solid #D8993E' : '1px solid var(--border-glass)',
-                  boxShadow: isSelected ? '0 4px 14px rgba(216, 153, 62, 0.3)' : 'none',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <IconComponent size={15} />
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
-        </div>
+            >
+              <IconComponent size={15} color={isSelected ? '#ffffff' : '#181e1b'} />
+              <span>{cat.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

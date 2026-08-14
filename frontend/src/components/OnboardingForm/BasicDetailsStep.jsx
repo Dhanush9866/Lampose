@@ -4,8 +4,8 @@ import { Building2, MapPin, User, Phone } from 'lucide-react';
 export default function BasicDetailsStep({ formData, onChange, errors = {} }) {
   return (
     <div className="animate-fade-in" style={{ marginBottom: '28px' }}>
-      <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Building2 size={20} color="var(--primary)" />
+      <h3 style={{ fontSize: '1.2rem', color: '#181e1b', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Building2 size={20} color="#45855a" />
         <span>1. Basic Property & Owner Details</span>
       </h3>
 
