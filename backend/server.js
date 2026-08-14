@@ -6,6 +6,9 @@ dotenv.config();
 
 const { connectDB } = require('./config/db');
 const propertyRoutes = require('./routes/propertyRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const statsRoutes = require('./routes/statsRoutes');
+const verificationRoutes = require('./routes/verificationRoutes');
 
 const app = express();
 
@@ -32,11 +35,27 @@ app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
 // Routes
 app.use('/api/properties', propertyRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', statsRoutes);
+app.use('/api/verifications', verificationRoutes);
 
-// Health check endpoint
+// Health check endpoint — reports real database connectivity, not a static "ok".
 app.get('/api/health', (req, res) => {
-  console.log(`🩺 [Health Check] Ping received at ${new Date().toISOString()}`);
-  res.json({ status: 'ok', service: 'Accommodation Onboarding API', timestamp: new Date() });
+  const mongoose = require('mongoose');
+  const READY_STATES = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  const dbConnected = mongoose.connection.readyState === 1;
+
+  res.status(dbConnected ? 200 : 503).json({
+    status: dbConnected ? 'ok' : 'degraded',
+    service: 'Accommodation Onboarding API',
+    database: {
+      state: READY_STATES[mongoose.connection.readyState] || 'unknown',
+      name: mongoose.connection.name || null,
+      connected: dbConnected,
+    },
+    uptimeSeconds: Math.round(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
 });
 
 const PORT = process.env.PORT || 5001;
