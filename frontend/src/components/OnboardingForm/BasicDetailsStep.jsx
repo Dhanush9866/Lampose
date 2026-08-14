@@ -1,7 +1,9 @@
 import React from 'react';
-import { Building2, MapPin, User, Phone } from 'lucide-react';
+import { Building2, MapPin, User, Phone, UserCheck, Mail } from 'lucide-react';
 
-export default function BasicDetailsStep({ formData, onChange, errors = {} }) {
+export default function BasicDetailsStep({ formData, onChange, errors = {}, userEmail = '' }) {
+  const activeEmployeeEmail = formData.employeeEmail || userEmail || '';
+
   return (
     <div className="animate-fade-in" style={{ marginBottom: '28px' }}>
       <h3 style={{ fontSize: '1.2rem', color: '#181e1b', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -10,6 +12,35 @@ export default function BasicDetailsStep({ formData, onChange, errors = {} }) {
       </h3>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '18px' }}>
+        {/* Onboarded By Employee Email Field (Auto-populated from Login Session) */}
+        <div className="form-group" style={{ gridColumn: '1 / -1', marginBottom: '4px' }}>
+          <label className="form-label" htmlFor="employeeEmail" style={{ color: '#181e1b', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <UserCheck size={16} color="#45855a" />
+            <span>Onboarded By Employee Email *</span>
+            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>(Auto-filled from Employee Login Session)</span>
+          </label>
+          <div style={{ position: 'relative' }}>
+            <Mail size={16} color="#45855a" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              id="employeeEmail"
+              type="email"
+              name="employeeEmail"
+              required
+              placeholder="e.g. employee@lampose.com"
+              value={activeEmployeeEmail}
+              onChange={onChange}
+              className="form-input"
+              style={{
+                paddingLeft: '38px',
+                background: '#f8faf8',
+                fontWeight: 600,
+                color: '#181e1b',
+                borderColor: '#c2e2cc'
+              }}
+            />
+          </div>
+        </div>
+
         {/* Property Name */}
         <div className="form-group">
           <label className="form-label" htmlFor="propertyName">

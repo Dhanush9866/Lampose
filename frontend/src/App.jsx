@@ -6,11 +6,13 @@ import BasicDetailsStep from './components/OnboardingForm/BasicDetailsStep.jsx';
 import CategoryFieldsStep from './components/OnboardingForm/CategoryFieldsStep.jsx';
 import PricingAmenitiesStep from './components/OnboardingForm/PricingAmenitiesStep.jsx';
 import FormSuccessModal from './components/OnboardingForm/FormSuccessModal.jsx';
+import AuthScreen from './components/Auth/AuthScreen.jsx';
 import FilterBar from './components/Listings/FilterBar.jsx';
 import PropertyCard from './components/Listings/PropertyCard.jsx';
 import PropertyDetailModal from './components/Listings/PropertyDetailModal.jsx';
 import { fetchProperties, onboardProperty, deleteProperty } from './services/api.js';
-import { PlusCircle, AlertCircle, Building2 } from 'lucide-react';
+import { getCurrentUser, logout, getSavedEmployeeEmail } from './services/auth.js';
+import { PlusCircle, AlertCircle, Building2, Loader2, CloudUpload, Database } from 'lucide-react';
 
 const INITIAL_FORM_STATE = {
   name: '',
@@ -18,6 +20,7 @@ const INITIAL_FORM_STATE = {
   ownerName: '',
   ownerMobile: '',
   category: 'PG',
+  employeeEmail: '',
   stayType: 'Long Stay',
   shortStayDuration: '1-7 Days',
   dailyPrice: '',
@@ -26,7 +29,9 @@ const INITIAL_FORM_STATE = {
   rent: '',
   deposit: '',
   address: '',
-  imageUrl: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80',
+  imageUrl: '',
+  images: [],
+  localImages: [],
   amenities: ['WiFi', 'AC', 'Food', 'RO Water'],
   categoryDetails: {
     foodIncluded: true,
@@ -39,6 +44,9 @@ const INITIAL_FORM_STATE = {
 };
 
 export default function App() {
+  // Authentication State
+  const [user, setUser] = useState(getCurrentUser());
+
   const [activeTab, setActiveTab] = useState('listings'); // 'listings' | 'onboard'
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +56,7 @@ export default function App() {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitStage, setSubmitStage] = useState('');
   const [recentlyOnboarded, setRecentlyOnboarded] = useState(null);
 
   // Filter State
@@ -57,7 +66,7 @@ export default function App() {
   // Modal State
   const [activeModalProperty, setActiveModalProperty] = useState(null);
 
-  // Fetch properties on load
+  // Fetch properties only if authenticated
   const loadData = async () => {
     setLoading(true);
     setErrorMsg(null);
@@ -71,8 +80,26 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  // When employee logs in, attach employeeEmail (keep ownerName and ownerMobile clean for actual landlord/owner)
+  useEffect(() => {
+    const activeEmail = user?.email || getSavedEmployeeEmail() || '';
+    if (activeEmail) {
+      setFormData(prev => ({
+        ...prev,
+        employeeEmail: activeEmail
+      }));
+    }
+  }, [user]);
+
+  const handleLogout = () => {
+    logout();
+    setUser(null);
+  };
 
   // Compute stats for header badges
   const categoryCounts = properties.reduce((acc, p) => {
@@ -158,7 +185,7 @@ export default function App() {
     return errs;
   };
 
-  // Handle Form Submission
+  // Handle Form Submission (Uploads Images to Cloudinary on Submit & Saves to DB)
   const handleSubmitForm = async (e) => {
     e.preventDefault();
     const errs = validateForm();
@@ -167,21 +194,120 @@ export default function App() {
       return;
     }
 
-    // Default fallback image if no photo provided
-    const payload = {
-      ...formData,
-      imageUrl: formData.imageUrl?.trim() || '/lampose-logo-splash.png'
-    };
-
     setSubmitting(true);
-    const response = await onboardProperty(payload);
-    setSubmitting(false);
+    setSubmitStage('Preparing property photos...');
 
-    if (response && response.success) {
-      setRecentlyOnboarded(response.data);
-      loadData();
-    } else {
-      alert(`Failed to onboard property: ${response.error || response.message || 'Unknown error'}`);
+    try {
+      const localImages = Array.isArray(formData.localImages) ? formData.localImages : [];
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api/properties';
+      const singleEndpoint = API_BASE.replace(/\/properties\/?$/, '/properties/upload-image');
+      const batchEndpoint = API_BASE.replace(/\/properties\/?$/, '/properties/upload-images');
+
+      const finalUrls = [];
+
+      // Separate items with pending files from existing URLs
+      const filesToUpload = localImages.filter(item => item.file);
+
+      if (filesToUpload.length > 0) {
+        setSubmitStage(`Uploading ${filesToUpload.length} photo(s) to Cloudinary CDN...`);
+
+        // Try batch upload endpoint first
+        let batchSuccess = false;
+        try {
+          const batchFd = new FormData();
+          filesToUpload.forEach(item => batchFd.append('images', item.file));
+          
+          const batchRes = await fetch(batchEndpoint, {
+            method: 'POST',
+            body: batchFd
+          });
+
+          if (batchRes.ok) {
+            const batchJson = await batchRes.json();
+            if (batchJson.success && Array.isArray(batchJson.urls) && batchJson.urls.length === filesToUpload.length) {
+              let urlIdx = 0;
+              localImages.forEach(item => {
+                if (item.file) {
+                  finalUrls.push(batchJson.urls[urlIdx++]);
+                } else if (item.url) {
+                  finalUrls.push(item.url);
+                }
+              });
+              batchSuccess = true;
+            }
+          }
+        } catch (bErr) {
+          console.warn('Batch upload route skipped, using direct upload:', bErr);
+        }
+
+        // Fallback to concurrent single uploads if batch did not return
+        if (!batchSuccess) {
+          for (let i = 0; i < localImages.length; i++) {
+            const item = localImages[i];
+            if (item.file) {
+              setSubmitStage(`Uploading photo ${i + 1} of ${localImages.length} to Cloudinary...`);
+              const singleFd = new FormData();
+              singleFd.append('image', item.file);
+              const res = await fetch(singleEndpoint, { method: 'POST', body: singleFd });
+              const json = await res.json();
+              if (json.success && json.url) {
+                finalUrls.push(json.url);
+              }
+            } else if (item.url) {
+              finalUrls.push(item.url);
+            }
+          }
+        }
+      } else {
+        // Only existing URLs or presets
+        localImages.forEach(item => {
+          if (item.url) finalUrls.push(item.url);
+        });
+      }
+
+      // If no photos were chosen, apply default brand splash fallback
+      const resolvedImages = finalUrls.length > 0 ? finalUrls : ['/lampose-logo-splash.png'];
+
+      setSubmitStage('Saving accommodation to MongoDB database...');
+
+      const assignedEmail = formData.employeeEmail || user?.email || getSavedEmployeeEmail() || '';
+
+      const payload = {
+        ...formData,
+        employeeEmail: assignedEmail,
+        images: resolvedImages,
+        imageUrl: resolvedImages[0] || '/lampose-logo-splash.png'
+      };
+      delete payload.localImages;
+
+      console.log('🚀 [Onboarding Started] Sending payload to backend:', payload);
+      console.log(`   👨‍💼 Employee Email: "${assignedEmail}"`);
+      console.log(`   📸 Images Array (${resolvedImages.length}):`, resolvedImages);
+
+      const response = await onboardProperty(payload);
+
+      console.log('📥 [Onboarding Response]:', response);
+
+      if (response && response.success) {
+        console.log('✅ [Onboarding Success] Saved property:', response.data);
+        setRecentlyOnboarded(response.data);
+        const activeEmpEmail = user?.email || getSavedEmployeeEmail() || '';
+        setFormData({
+          ...INITIAL_FORM_STATE,
+          employeeEmail: activeEmpEmail
+        });
+        setFormErrors({});
+        loadData();
+      } else {
+        console.error('❌ [Onboarding Error]:', response?.error || response?.message);
+        alert(`Failed to onboard property: ${response.error || response.message || 'Unknown error'}`);
+      }
+    } catch (submitErr) {
+      console.error('❌ [Submission Exception]:', submitErr);
+      alert('An error occurred while uploading photos or saving property. Please try again.');
+    } finally {
+      setSubmitting(false);
+      setSubmitStage('');
     }
   };
 
@@ -193,6 +319,11 @@ export default function App() {
     }
   };
 
+  // If user is not logged in, display full-screen Login Screen first
+  if (!user) {
+    return <AuthScreen onAuthSuccess={(authUser) => setUser(authUser)} />;
+  }
+
   // Filtered Properties for Display Page
   const filteredProperties = properties.filter(p => {
     const matchesCategory = selectedCategory === 'All' || p.category.toLowerCase() === selectedCategory.toLowerCase();
@@ -201,133 +332,131 @@ export default function App() {
       p.name.toLowerCase().includes(q) ||
       p.place.toLowerCase().includes(q) ||
       p.ownerName.toLowerCase().includes(q) ||
-      p.ownerMobile.includes(q)
+      p.ownerMobile.includes(q) ||
+      (p.employeeEmail && p.employeeEmail.toLowerCase().includes(q))
     );
     return matchesCategory && matchesSearch;
   });
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header Navigation */}
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} counts={categoryCounts} />
+      {/* Header Navigation with Auth */}
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        counts={categoryCounts}
+        user={user}
+        onLogout={handleLogout}
+      />
 
       {/* Main App Workspace */}
       <main className="main-workspace">
         <div className="container">
 
           {/* ==================================================== */}
-          {/* TAB 1: EXPLORE / DISPLAY PROPERTIES LISTINGS */}
+          {/* TAB 1: EXPLORE LIVE LISTINGS */}
           {/* ==================================================== */}
           {activeTab === 'listings' && (
-            <div>
-              {/* Interactive Auto-Rotating Hero Carousel Slider - NO GRID LINES BEHIND HERO */}
-              <HeroSlider onOnboardClick={() => setActiveTab('onboard')} />
+            <div className="animate-fade-in">
+              {/* Interactive Banner / Carousel */}
+              <HeroSlider onCategorySelect={(cat) => {
+                setSelectedCategory(cat);
+              }} />
 
-              {/* GRID LINES PATTERN STARTS STRICTLY BELOW HERO SECTION */}
-              <div className="grid-lines-below-hero">
-                {/* Filter & Search Bar */}
-                <FilterBar
-                  selectedCategory={selectedCategory}
-                  onCategoryChange={setSelectedCategory}
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  totalCount={filteredProperties.length}
-                />
+              {/* Search & Filter Bar */}
+              <FilterBar
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                totalCount={filteredProperties.length}
+              />
 
-                {/* Error Message */}
-                {errorMsg && (
-                  <div style={{
-                    padding: '14px 16px',
-                    borderRadius: 'var(--radius-sm)',
-                    background: 'rgba(244, 63, 94, 0.15)',
-                    border: '1px solid rgba(244, 63, 94, 0.3)',
-                    color: '#f43f5e',
-                    marginBottom: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '0.9rem'
-                  }}>
-                    <AlertCircle size={18} />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
+              {/* Error Message */}
+              {errorMsg && (
+                <div style={{
+                  padding: '16px',
+                  borderRadius: '16px',
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  color: '#dc2626',
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <AlertCircle size={20} />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
 
-                {/* Loading Spinner */}
-                {loading ? (
-                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-                    <div style={{ fontSize: '1rem', marginBottom: '8px' }}>Loading Lampose properties...</div>
-                  </div>
-                ) : filteredProperties.length === 0 ? (
-                  <div className="glass-card" style={{ textAlign: 'center', padding: '40px 20px' }}>
-                    <Building2 size={40} color="var(--lampose-gold)" style={{ margin: '0 auto 12px' }} />
-                    <h3 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '6px' }}>No Properties Found</h3>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '0.88rem' }}>
-                      No accommodations matched your search or category filter. Try clearing filters or onboard a new property!
-                    </p>
-                    <button onClick={() => setActiveTab('onboard')} className="btn btn-primary">
-                      <PlusCircle size={16} />
-                      <span>Onboard Property Now</span>
-                    </button>
-                  </div>
-                ) : (
-                  /* Properties Grid Display */
-                  <div className="property-grid" style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                    gap: '18px'
-                  }}>
-                    {filteredProperties.map(property => (
-                      <PropertyCard
-                        key={property._id}
-                        property={property}
-                        onViewDetails={(p) => setActiveModalProperty(p)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Listings Grid */}
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+                  <p style={{ fontSize: '1.1rem' }}>Loading properties from database...</p>
+                </div>
+              ) : filteredProperties.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  background: '#ffffff',
+                  borderRadius: '20px',
+                  border: '1px solid #e2e8f0',
+                  color: 'var(--text-muted)'
+                }}>
+                  <Building2 size={48} style={{ margin: '0 auto 12px', opacity: 0.4, color: '#45855a' }} />
+                  <h3 style={{ fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '4px' }}>No Accommodations Found</h3>
+                  <p style={{ fontSize: '0.88rem' }}>Try adjusting your search or category filters, or onboard a new property.</p>
+                  <button
+                    onClick={() => setActiveTab('onboard')}
+                    className="btn btn-primary"
+                    style={{ marginTop: '16px', padding: '8px 20px' }}
+                  >
+                    <PlusCircle size={16} />
+                    <span>Onboard First Property</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="property-grid">
+                  {filteredProperties.map(property => (
+                    <PropertyCard
+                      key={property._id}
+                      property={property}
+                      onViewDetails={() => setActiveModalProperty(property)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* ==================================================== */}
-          {/* TAB 2: PROPERTY ONBOARDING FORM */}
+          {/* TAB 2: MULTI-STEP ONBOARDING FORM */}
           {/* ==================================================== */}
           {activeTab === 'onboard' && (
-            <div style={{ maxWidth: '840px', margin: '0 auto' }}>
-              <div style={{
-                marginBottom: '16px',
-                textAlign: 'center',
-                padding: '20px 16px',
-                borderRadius: 'var(--radius-md)',
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.02)'
-              }}>
-                <span className="badge" style={{ marginBottom: '8px', background: '#eaf3ed', color: '#45855a', border: '1px solid #c2e2cc' }}>
-                  LAMPOSE ONBOARDING PORTAL
-                </span>
-                <h1 style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 800, color: '#181e1b', marginBottom: '4px' }}>
+            <div className="glass-card form-card animate-fade-in" style={{ maxWidth: '860px', margin: '0 auto', padding: '32px 28px' }}>
+              <div style={{ marginBottom: '24px', textAlign: 'center' }}>
+                <h2 style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 800, color: 'var(--text-main)' }}>
                   Onboard Your Accommodation
-                </h1>
-                <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                  Collect name, place, owner name, owner mobile number & category-specific attributes for PGs, Hostels, Dormitories, or Bachelor Rooms.
+                </h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '4px' }}>
+                  Select category, fill specifications, add photos and live in seconds
                 </p>
               </div>
 
-              {/* Form Container */}
-              <form onSubmit={handleSubmitForm} className="glass-card form-card" style={{ padding: '24px' }}>
-                {/* Step 1: Category Selector */}
+              <form onSubmit={handleSubmitForm}>
+                {/* Step 1: Category Picker */}
                 <CategorySelector
                   selectedCategory={formData.category}
                   onSelectCategory={handleCategorySelect}
                 />
 
-                {/* Step 2: Basic Property & Owner Details */}
+                {/* Step 2: Essential Basic Details with Employee Field */}
                 <BasicDetailsStep
                   formData={formData}
                   onChange={handleInputChange}
                   errors={formErrors}
+                  userEmail={user?.email || getSavedEmployeeEmail()}
                 />
 
                 {/* Step 3: Dynamic Category-Specified Details */}
@@ -350,6 +479,7 @@ export default function App() {
                     type="button"
                     onClick={() => setActiveTab('listings')}
                     className="btn btn-secondary"
+                    disabled={submitting}
                   >
                     Cancel
                   </button>
@@ -358,9 +488,16 @@ export default function App() {
                     type="submit"
                     disabled={submitting}
                     className="btn btn-primary"
-                    style={{ padding: '12px 28px' }}
+                    style={{ padding: '12px 28px', minWidth: '220px' }}
                   >
-                    {submitting ? 'Saving to MongoDB...' : 'Submit & Onboard Property'}
+                    {submitting ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>{submitStage || 'Uploading & Saving...'}</span>
+                      </span>
+                    ) : (
+                      <span>Submit & Onboard Property</span>
+                    )}
                   </button>
                 </div>
               </form>
@@ -369,6 +506,60 @@ export default function App() {
 
         </div>
       </main>
+
+      {/* Global Cloud Upload & Submission Progress Modal Overlay */}
+      {submitting && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 10000,
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px'
+        }} className="animate-fade-in">
+          <div style={{
+            maxWidth: '440px',
+            width: '100%',
+            padding: '32px 24px',
+            textAlign: 'center',
+            background: '#ffffff',
+            borderRadius: '24px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+            border: '1px solid #e2e8f0'
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: '#eaf3ed',
+              border: '2px solid #45855a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              color: '#45855a'
+            }}>
+              <Loader2 size={32} className="animate-spin" />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#181e1b', marginBottom: '8px' }}>
+              Onboarding Property...
+            </h3>
+            
+            <p style={{ fontSize: '0.9rem', color: '#45855a', fontWeight: 700, marginBottom: '6px' }}>
+              {submitStage || 'Uploading photos to Cloudinary CDN & Saving...'}
+            </p>
+
+            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              Please do not close this window while images are being saved to cloud storage.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer style={{
@@ -392,13 +583,18 @@ export default function App() {
             setActiveTab('listings');
           }}
           onResetForm={() => {
+            const activeEmpEmail = user?.email || getSavedEmployeeEmail() || '';
             setRecentlyOnboarded(null);
-            setFormData(INITIAL_FORM_STATE);
+            setFormData({
+              ...INITIAL_FORM_STATE,
+              employeeEmail: activeEmpEmail,
+              empEmail: activeEmpEmail
+            });
           }}
         />
       )}
 
-      {/* Property Detail Specifications Modal */}
+      {/* Property Detail Modal */}
       {activeModalProperty && (
         <PropertyDetailModal
           property={activeModalProperty}
