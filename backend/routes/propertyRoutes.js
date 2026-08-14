@@ -2,15 +2,14 @@ const express = require('express');
 const router = express.Router();
 const Property = require('../models/Property');
 const { getIsInMemory, getMemoryStore } = require('../config/db');
-const sampleProperties = require('../seedData');
 
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 
+// The in-memory store is a failover for a database outage only. It is NOT
+// pre-seeded with sample listings — an empty database must read as empty
+// rather than as fabricated inventory.
 let inMemoryStore = getMemoryStore();
-if (inMemoryStore.length === 0) {
-  inMemoryStore.push(...sampleProperties);
-}
 
 const upload = multer({
   storage: multer.memoryStorage(),
