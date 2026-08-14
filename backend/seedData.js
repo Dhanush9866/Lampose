@@ -15,6 +15,11 @@ const sampleProperties = [
     deposit: 15000,
     address: "No. 42, 1st Cross, Near Jyoti Nivas College Road, Koramangala",
     imageUrl: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80"
+    ],
     amenities: ["WiFi", "AC", "Food", "TV", "Housekeeping", "Power Backup", "RO Water", "Washing Machine"],
     categoryDetails: {
       foodIncluded: true,
@@ -42,6 +47,11 @@ const sampleProperties = [
     deposit: 20000,
     address: "Plot 88, 27th Main Rd, Sector 2, HSR Layout",
     imageUrl: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1520277739336-7bf67edfa768?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80"
+    ],
     amenities: ["WiFi", "CCTV Security", "Warden On-site", "Mess Canteen", "Study Room", "Biometric Lock", "RO Water"],
     categoryDetails: {
       hostelType: "Girls Hostel",
@@ -69,6 +79,10 @@ const sampleProperties = [
     deposit: 500,
     address: "12A, 100 Feet Rd, Opposite Metro Station, Indiranagar",
     imageUrl: "https://images.unsplash.com/photo-1520277739336-7bf67edfa768?auto=format&fit=crop&w=800&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1520277739336-7bf67edfa768?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80"
+    ],
     amenities: ["WiFi", "Personal Lockers", "AC", "24/7 Washroom", "Keycard Access", "Lounge"],
     categoryDetails: {
       totalBeds: 24,
@@ -96,6 +110,10 @@ const sampleProperties = [
     deposit: 30000,
     address: "House 304, 7th Main, BTM 2nd Stage",
     imageUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"
+    ],
     amenities: ["Kitchen Setup", "Balcony", "24/7 Water", "Covered Parking", "Power Backup"],
     categoryDetails: {
       roomType: "1 BHK Independent",

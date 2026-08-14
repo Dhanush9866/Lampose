@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IndianRupee, Clock, Calendar, Check, Sparkles, Upload, Loader2, CloudUpload, Image as ImageIcon, AlertCircle, X, CheckCircle2 } from 'lucide-react';
+import { IndianRupee, Clock, Calendar, Check, Sparkles, Upload, CloudUpload, AlertCircle, X, CheckCircle2, Plus, Star } from 'lucide-react';
 
 const PRESET_IMAGES = [
   { label: 'Cozy Room', url: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80' },
@@ -29,13 +29,13 @@ const ALL_AMENITIES = [
 const DEFAULT_FALLBACK_SPLASH = '/lampose-logo-splash.png';
 
 export default function PricingAmenitiesStep({ formData, onChange, errors = {} }) {
-  const [uploading, setUploading] = useState(false);
-  const [uploadStage, setUploadStage] = useState('');
-  const [uploadError, setUploadError] = useState('');
-  const [isCloudinaryUrl, setIsCloudinaryUrl] = useState(false);
+  const [customUrlInput, setCustomUrlInput] = useState('');
 
   const selectedAmenities = Array.isArray(formData.amenities) ? formData.amenities : [];
   const currentStayType = formData.stayType === 'Short Stay' ? 'Short Stay' : 'Long Stay';
+  
+  // Local images array representing photos chosen by user
+  const localImages = Array.isArray(formData.localImages) ? formData.localImages : [];
 
   const toggleAmenity = (amenity) => {
     const updated = selectedAmenities.includes(amenity)
@@ -58,56 +58,66 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
   const isShortStay = currentStayType === 'Short Stay' && !isBachelor;
   const isLongStay = (currentStayType === 'Long Stay' || isBachelor) && !isShortStay;
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
+  // Local File Selection (Does not upload to cloud until form submit)
+  const handleFileSelect = (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Reset file input value so same file can be re-selected if needed
+    const fileList = Array.from(files);
     e.target.value = '';
 
-    setUploading(true);
-    setUploadError('');
-    setUploadStage('Uploading photo to server...');
+    const newItems = fileList.map((file) => ({
+      id: 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+      file: file,
+      previewUrl: URL.createObjectURL(file),
+      name: file.name
+    }));
 
-    try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('image', file);
+    const updated = [...localImages, ...newItems];
+    onChange({ target: { name: 'localImages', value: updated } });
+  };
 
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/properties';
-      const uploadEndpoint = API_BASE.replace(/\/properties\/?$/, '/properties/upload-image');
-
-      setUploadStage('Storing in Cloudinary & generating secure link...');
-
-      const response = await fetch(uploadEndpoint, {
-        method: 'POST',
-        body: uploadFormData
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.url) {
-        setUploadStage('✓ Cloudinary Upload Complete!');
-        onChange({ target: { name: 'imageUrl', value: data.url } });
-        setIsCloudinaryUrl(true);
-      } else {
-        setUploadError(data.error || data.message || 'Failed to upload photo to Cloudinary.');
-      }
-    } catch (err) {
-      console.error('Cloudinary upload error:', err);
-      setUploadError('Failed to connect to image upload service. Please check server connection.');
-    } finally {
-      setUploading(false);
+  const handleRemoveImage = (indexToRemove) => {
+    const itemToRemove = localImages[indexToRemove];
+    if (itemToRemove && itemToRemove.previewUrl && itemToRemove.previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(itemToRemove.previewUrl);
     }
+    const updated = localImages.filter((_, idx) => idx !== indexToRemove);
+    onChange({ target: { name: 'localImages', value: updated } });
   };
 
-  const handleClearImage = () => {
-    onChange({ target: { name: 'imageUrl', value: '' } });
-    setIsCloudinaryUrl(false);
-    setUploadStage('');
-    setUploadError('');
+  const handleSetCoverPhoto = (indexToSet) => {
+    if (indexToSet === 0) return;
+    const selected = localImages[indexToSet];
+    const remaining = localImages.filter((_, idx) => idx !== indexToSet);
+    const reordered = [selected, ...remaining];
+    onChange({ target: { name: 'localImages', value: reordered } });
   };
 
-  const hasCustomImage = Boolean(formData.imageUrl && formData.imageUrl.trim());
+  const handleAddCustomUrl = () => {
+    if (!customUrlInput.trim()) return;
+    const newUrl = customUrlInput.trim();
+    const newItem = {
+      id: 'url_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+      url: newUrl,
+      previewUrl: newUrl
+    };
+    const updated = [...localImages, newItem];
+    onChange({ target: { name: 'localImages', value: updated } });
+    setCustomUrlInput('');
+  };
+
+  const handleAddPreset = (url, label) => {
+    if (localImages.some(img => img.url === url || img.previewUrl === url)) return;
+    const newItem = {
+      id: 'preset_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+      url: url,
+      previewUrl: url,
+      name: label
+    };
+    const updated = [...localImages, newItem];
+    onChange({ target: { name: 'localImages', value: updated } });
+  };
 
   return (
     <div className="animate-fade-in" style={{ marginBottom: '28px' }}>
@@ -343,144 +353,191 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
         </div>
 
         {/* ==================================================== */}
-        {/* CLOUDINARY IMAGE UPLOADER SECTION (OPTIONAL WITH FALLBACK) */}
+        {/* MULTI-PHOTO SELECTION & GALLERY (UPLOADS ON SUBMIT) */}
         {/* ==================================================== */}
         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
           <label className="form-label" style={{ color: '#181e1b', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <CloudUpload size={18} color="#45855a" />
-              <span>Property Photo</span>
-              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>(Optional)</span>
+              <span>Property Photos ({localImages.length} Selected)</span>
+              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>(Optional - Uploaded on Submit)</span>
             </span>
             <span style={{ fontSize: '0.75rem', color: '#45855a', fontWeight: 600, background: '#eaf3ed', padding: '2px 8px', borderRadius: '10px' }}>
-              ☁️ Cloudinary Auto-Storage
+              ☁️ Auto Cloudinary Storage on Submit
             </span>
           </label>
 
-          {/* Upload Dropzone */}
+          {/* Select Dropzone */}
           <div 
             style={{
-              border: uploading ? '2px solid #45855a' : '2px dashed #c2e2cc',
+              border: '2px dashed #c2e2cc',
               borderRadius: '16px',
               padding: '22px 16px',
               textAlign: 'center',
-              background: uploading ? '#f0f7f2' : '#f8faf8',
-              cursor: uploading ? 'wait' : 'pointer',
+              background: '#f8faf8',
+              cursor: 'pointer',
               transition: 'all 0.25s ease',
-              marginBottom: '12px',
+              marginBottom: '14px',
               position: 'relative'
             }}
-            onClick={() => !uploading && document.getElementById('cloudinaryFileInput').click()}
+            onClick={() => document.getElementById('cloudinaryMultiFileInput').click()}
           >
             <input
-              id="cloudinaryFileInput"
+              id="cloudinaryMultiFileInput"
               type="file"
               accept="image/*"
+              multiple
               style={{ display: 'none' }}
-              onChange={handleFileUpload}
-              disabled={uploading}
+              onChange={handleFileSelect}
             />
 
-            {uploading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                <Loader2 size={32} color="#45855a" className="animate-spin" />
-                <div>
-                  <span style={{ fontSize: '0.92rem', color: '#45855a', fontWeight: 700, display: 'block' }}>
-                    {uploadStage || 'Uploading photo to Cloudinary...'}
-                  </span>
-                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                    Please wait while your image is stored and CDN link is generated...
-                  </span>
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '12px',
+                background: '#eaf3ed',
+                color: '#45855a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Upload size={22} />
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '46px',
-                  height: '46px',
-                  borderRadius: '12px',
-                  background: '#eaf3ed',
-                  color: '#45855a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Upload size={22} />
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#181e1b' }}>
-                    Click to select photo or drag & drop image
-                  </span>
-                  <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
-                    Supports JPG, PNG, WEBP. Stored instantly on Cloudinary.
-                  </p>
-                </div>
+              <div>
+                <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#181e1b' }}>
+                  Click to select photos or drag & drop images
+                </span>
+                <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                  Supports JPG, PNG, WEBP. Photos will be saved to Cloudinary when you submit the form.
+                </p>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Error Notification */}
-          {uploadError && (
-            <div style={{ padding: '10px 14px', borderRadius: '10px', background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.84rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertCircle size={16} flexShrink={0} />
-              <span>{uploadError}</span>
-            </div>
-          )}
+          {/* Multi-Image Gallery Grid */}
+          {localImages.length > 0 ? (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                gap: '10px',
+                marginBottom: '10px'
+              }}>
+                {localImages.map((item, idx) => {
+                  const isCover = idx === 0;
+                  return (
+                    <div
+                      key={item.id || idx}
+                      style={{
+                        position: 'relative',
+                        height: '110px',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        border: isCover ? '2px solid #45855a' : '1px solid #cbd5e1',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                        background: '#ffffff'
+                      }}
+                    >
+                      <img
+                        src={item.previewUrl || item.url || DEFAULT_FALLBACK_SPLASH}
+                        alt={`Photo ${idx + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.target.src = DEFAULT_FALLBACK_SPLASH; }}
+                      />
 
-          {/* Active Image Status or Informational Fallback Warning */}
-          {hasCustomImage ? (
-            /* Uploaded Image Preview Box */
-            <div style={{
-              padding: '14px',
-              borderRadius: '14px',
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '14px',
-              marginBottom: '14px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
-                <img
-                  src={formData.imageUrl}
-                  alt="Property Preview"
-                  style={{ width: '84px', height: '58px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #cbd5e1', flexShrink: 0 }}
-                  onError={(e) => { e.target.src = DEFAULT_FALLBACK_SPLASH; }}
-                />
-                <div style={{ overflow: 'hidden' }}>
-                  <span style={{ fontSize: '0.85rem', color: '#45855a', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <CheckCircle2 size={15} />
-                    {isCloudinaryUrl || formData.imageUrl.includes('cloudinary') ? 'Uploaded to Cloudinary CDN' : 'Custom Image Set'}
-                  </span>
-                  <p style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '340px' }}>
-                    {formData.imageUrl}
-                  </p>
+                      {/* Cover Photo Badge / Set Cover Button */}
+                      {isCover ? (
+                        <div style={{
+                          position: 'absolute',
+                          top: '6px',
+                          left: '6px',
+                          background: '#45855a',
+                          color: '#ffffff',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}>
+                          <Star size={10} fill="#ffffff" />
+                          <span>Cover</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSetCoverPhoto(idx)}
+                          style={{
+                            position: 'absolute',
+                            top: '6px',
+                            left: '6px',
+                            background: 'rgba(0,0,0,0.65)',
+                            color: '#ffffff',
+                            border: 'none',
+                            fontSize: '0.65rem',
+                            fontWeight: 600,
+                            padding: '2px 6px',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                          }}
+                          title="Click to make this the primary cover photo"
+                        >
+                          Make Cover
+                        </button>
+                      )}
+
+                      {/* Remove Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '6px',
+                          background: 'rgba(239, 68, 68, 0.9)',
+                          color: '#ffffff',
+                          border: 'none',
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                        }}
+                        title="Remove this photo"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* Add More Photos Box Inside Grid */}
+                <div
+                  onClick={() => document.getElementById('cloudinaryMultiFileInput').click()}
+                  style={{
+                    height: '110px',
+                    borderRadius: '12px',
+                    border: '2px dashed #c2e2cc',
+                    background: '#f8faf8',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    cursor: 'pointer',
+                    color: '#45855a',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Plus size={22} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Add More</span>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={handleClearImage}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  background: '#f1f5f2',
-                  border: '1px solid #e2e8f0',
-                  color: '#64748b',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  flexShrink: 0
-                }}
-              >
-                <X size={14} />
-                <span>Remove</span>
-              </button>
             </div>
           ) : (
             /* Warning / Informational Fallback Notice */
@@ -501,30 +558,37 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
               />
               <div style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: '1.4' }}>
                 <span style={{ fontWeight: 600, color: '#181e1b', display: 'block' }}>
-                  No custom photo uploaded (Optional)
+                  No photos selected (Optional)
                 </span>
-                <span>If you proceed without uploading, the default <strong>Lampose Brand Splash Photo</strong> will be used automatically.</span>
+                <span>If you submit without photos, the default <strong>Lampose Brand Splash Photo</strong> will be used.</span>
               </div>
             </div>
           )}
 
           {/* Manual URL Input */}
-          <div style={{ marginBottom: '10px' }}>
+          <div style={{ marginBottom: '12px' }}>
             <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>
-              Or enter Photo URL directly:
+              Or add Photo by URL:
             </span>
-            <input
-              type="url"
-              name="imageUrl"
-              placeholder="https://res.cloudinary.com/... or https://images.unsplash.com/..."
-              value={formData.imageUrl || ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                setIsCloudinaryUrl(val.includes('cloudinary.com'));
-                onChange(e);
-              }}
-              className="form-input"
-            />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="url"
+                placeholder="Paste Image URL (https://...)"
+                value={customUrlInput}
+                onChange={(e) => setCustomUrlInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomUrl(); } }}
+                className="form-input"
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomUrl}
+                className="btn btn-secondary"
+                style={{ padding: '0 16px', fontSize: '0.82rem', whiteSpace: 'nowrap', borderRadius: '10px' }}
+              >
+                Add URL
+              </button>
+            </div>
           </div>
 
           {/* Quick Presets */}
@@ -536,13 +600,10 @@ export default function PricingAmenitiesStep({ formData, onChange, errors = {} }
                 type="button"
                 className="btn btn-secondary"
                 style={{ padding: '6px 12px', fontSize: '0.78rem', borderRadius: '14px', background: '#ffffff', color: '#181e1b', border: '1px solid #cbd5e1' }}
-                onClick={() => {
-                  setIsCloudinaryUrl(false);
-                  onChange({ target: { name: 'imageUrl', value: img.url } });
-                }}
+                onClick={() => handleAddPreset(img.url, img.label)}
               >
                 <Sparkles size={12} color="#45855a" />
-                {img.label}
+                <span>+ {img.label}</span>
               </button>
             ))}
           </div>

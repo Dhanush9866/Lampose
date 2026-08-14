@@ -1,7 +1,7 @@
 import React from 'react';
-import { PlusCircle, LayoutGrid } from 'lucide-react';
+import { PlusCircle, LayoutGrid, LogIn, LogOut, User } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab }) {
+export default function Navbar({ activeTab, setActiveTab, user, onOpenAuthModal, onLogout }) {
   return (
     <header className="site-header" style={{
       position: 'fixed',
@@ -15,7 +15,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
       boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
     }}>
       <div className="header-container header-content">
-        {/* Brand Logo - Clean dark typography */}
+        {/* Brand Logo */}
         <div 
           onClick={() => setActiveTab('listings')}
           className="brand-logo"
@@ -29,7 +29,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         </div>
 
         {/* Navigation Action Buttons */}
-        <div className="header-nav">
+        <div className="header-nav" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             onClick={() => setActiveTab('listings')}
             className="nav-btn"
@@ -53,6 +53,74 @@ export default function Navbar({ activeTab, setActiveTab }) {
             <PlusCircle size={16} />
             <span>Onboard</span>
           </button>
+
+          {/* User Auth Section */}
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 12px',
+                  borderRadius: '20px',
+                  background: '#eaf3ed',
+                  border: '1px solid #c2e2cc',
+                  color: '#181e1b',
+                  fontSize: '0.82rem',
+                  fontWeight: 600
+                }}
+              >
+                <div style={{
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  background: '#45855a',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.72rem',
+                  fontWeight: 800
+                }}>
+                  {user.name ? user.name[0].toUpperCase() : 'U'}
+                </div>
+                <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.name || 'User'}
+                </span>
+              </div>
+
+              <button
+                onClick={onLogout}
+                className="nav-btn"
+                style={{
+                  padding: '6px 10px',
+                  background: '#fef2f2',
+                  borderColor: '#fecaca',
+                  color: '#dc2626',
+                  fontSize: '0.78rem'
+                }}
+                title="Sign Out"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAuthModal}
+              className="nav-btn"
+              style={{
+                marginLeft: '4px',
+                background: '#181e1b',
+                color: '#ffffff',
+                borderColor: '#181e1b',
+                fontWeight: 600
+              }}
+            >
+              <LogIn size={15} />
+              <span>Login</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

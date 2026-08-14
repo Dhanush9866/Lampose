@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, MapPin, User, Phone, ShieldCheck, Trash2, CheckCircle2, Clock, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, MapPin, User, Phone, ShieldCheck, Trash2, CheckCircle2, Clock, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function PropertyDetailModal({ property, onClose, onDelete }) {
   if (!property) return null;
@@ -19,16 +19,80 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
     deposit,
     address,
     imageUrl,
+    images = [],
+    employeeEmail,
     amenities = [],
     categoryDetails = {}
   } = property;
+
+  const allImages = Array.isArray(images) && images.length > 0
+    ? images
+    : (imageUrl && imageUrl.trim() ? [imageUrl] : ['/lampose-logo-splash.png']);
+
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [isBannerHovered, setIsBannerHovered] = useState(false);
+
+  const currentImage = allImages[activeImageIndex] || allImages[0] || '/lampose-logo-splash.png';
+  const isSplashImage = currentImage?.includes('splash') || currentImage?.includes('logo');
 
   const badgeClass =
     category === 'PG' ? 'badge-pg' :
     category === 'Hostel' ? 'badge-hostel' :
     category === 'Dormitory' ? 'badge-dormitory' : 'badge-bachelor';
 
-  const isSplashImage = imageUrl?.includes('splash') || imageUrl?.includes('logo');
+  // Auto-scroll through photos every 4 seconds (pauses on hover)
+  useEffect(() => {
+    if (allImages.length <= 1 || isBannerHovered) return;
+
+    const interval = setInterval(() => {
+      setActiveImageIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [allImages.length, isBannerHovered]);
+
+  const handlePrev = (e) => {
+    if (e) e.stopPropagation();
+    setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+  };
+
+  const handleNext = (e) => {
+    if (e) e.stopPropagation();
+    setActiveImageIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+  };
+
+  // Keyboard navigation for image carousel
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') {
+        handlePrev();
+      } else if (e.key === 'ArrowRight') {
+        handleNext();
+      } else if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [allImages.length]);
+
+  // Touch swipe handling for mobile devices
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!touchStartX) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = touchStartX - touchEndX;
+    if (diffX > 50) {
+      handleNext();
+    } else if (diffX < -50) {
+      handlePrev();
+    }
+    setTouchStartX(null);
+  };
 
   return (
     <div 
@@ -68,7 +132,7 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             position: 'absolute',
             top: '14px',
             right: '14px',
-            zIndex: 10,
+            zIndex: 20,
             width: '40px',
             height: '40px',
             borderRadius: '50%',
@@ -80,31 +144,157 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             justifyContent: 'center',
             cursor: 'pointer',
             touchAction: 'manipulation',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
           }}
         >
           <X size={20} />
         </button>
 
-        {/* Hero Image Banner */}
-        <div style={{ position: 'relative', height: '220px', background: isSplashImage ? '#f6f8f6' : '#181e1b', overflow: 'hidden' }}>
+        {/* Interactive Hero Image Banner Carousel */}
+        <div 
+          style={{ position: 'relative', height: '280px', background: isSplashImage ? '#f6f8f6' : '#181e1b', overflow: 'hidden' }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onMouseEnter={() => setIsBannerHovered(true)}
+          onMouseLeave={() => setIsBannerHovered(false)}
+        >
           <img
-            src={imageUrl || '/lampose-logo-splash.png'}
-            alt={name}
+            key={activeImageIndex}
+            src={currentImage}
+            alt={`${name} - Photo ${activeImageIndex + 1}`}
             style={{
               width: '100%',
               height: '100%',
               objectFit: isSplashImage ? 'contain' : 'cover',
-              padding: isSplashImage ? '20px' : '0'
+              padding: isSplashImage ? '24px' : '0',
+              transition: 'opacity 0.3s ease'
             }}
           />
           <div style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'
+            background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)',
+            pointerEvents: 'none'
           }} />
 
-          <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '20px' }}>
+          {/* Carousel Next & Prev Controls (if > 1 image) */}
+          {allImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrev}
+                style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 10,
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.92)',
+                  border: 'none',
+                  color: '#181e1b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                  transition: 'all 0.2s ease'
+                }}
+                title="Previous photo (or Left Arrow key)"
+              >
+                <ChevronLeft size={22} />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleNext}
+                style={{
+                  position: 'absolute',
+                  right: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 10,
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.92)',
+                  border: 'none',
+                  color: '#181e1b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                  transition: 'all 0.2s ease'
+                }}
+                title="Next photo (or Right Arrow key)"
+              >
+                <ChevronRight size={22} />
+              </button>
+
+              {/* Photo Index Counter Badge */}
+              <div style={{
+                position: 'absolute',
+                top: '14px',
+                left: '16px',
+                zIndex: 10,
+                background: 'rgba(0, 0, 0, 0.65)',
+                color: '#ffffff',
+                padding: '5px 12px',
+                borderRadius: '12px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                backdropFilter: 'blur(4px)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <span>📷 {activeImageIndex + 1} / {allImages.length} Photos</span>
+              </div>
+
+              {/* Pagination Dots on Banner */}
+              <div style={{
+                position: 'absolute',
+                bottom: '12px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: 'rgba(0, 0, 0, 0.4)',
+                padding: '4px 10px',
+                borderRadius: '14px',
+                backdropFilter: 'blur(4px)'
+              }}>
+                {allImages.map((_, dotIdx) => {
+                  const isActive = dotIdx === activeImageIndex;
+                  return (
+                    <span
+                      key={dotIdx}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveImageIndex(dotIdx);
+                      }}
+                      style={{
+                        width: isActive ? '14px' : '6px',
+                        height: '6px',
+                        borderRadius: '4px',
+                        background: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Banner Title & Place Details */}
+          <div style={{ position: 'absolute', bottom: allImages.length > 1 ? '32px' : '16px', left: '20px', right: '20px', zIndex: 5 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <span className={`badge ${badgeClass}`} style={{ background: '#ffffff', color: '#181e1b', border: 'none', fontWeight: 700 }}>
                 {category}
@@ -124,6 +314,47 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             </div>
           </div>
         </div>
+
+        {/* Thumbnail Gallery Strip (if > 1 image) */}
+        {allImages.length > 1 && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 16px',
+            background: '#f8faf8',
+            borderBottom: '1px solid #e2e8f0',
+            overflowX: 'auto'
+          }}>
+            {allImages.map((thumbUrl, idx) => {
+              const isSelected = idx === activeImageIndex;
+              return (
+                <div
+                  key={idx}
+                  onClick={() => setActiveImageIndex(idx)}
+                  style={{
+                    width: '74px',
+                    height: '50px',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: isSelected ? '2px solid #45855a' : '1px solid #cbd5e1',
+                    opacity: isSelected ? 1 : 0.65,
+                    transform: isSelected ? 'scale(1.04)' : 'scale(1)',
+                    transition: 'all 0.2s ease',
+                    flexShrink: 0
+                  }}
+                >
+                  <img
+                    src={thumbUrl}
+                    alt={`Thumbnail ${idx + 1}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Content Body */}
         <div style={{ padding: '24px 20px' }}>
@@ -213,6 +444,12 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
               <div style={{ width: '100%', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
                 <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Street Address:</span>
                 <p style={{ fontSize: '0.85rem', color: '#181e1b', marginTop: '2px', lineHeight: '1.4' }}>{address}</p>
+              </div>
+            )}
+            {employeeEmail && (
+              <div style={{ width: '100%', paddingTop: '10px', borderTop: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Onboarded By Employee:</span>
+                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#45855a' }}>{employeeEmail}</span>
               </div>
             )}
           </div>

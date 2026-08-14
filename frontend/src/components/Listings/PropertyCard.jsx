@@ -1,5 +1,5 @@
-import React from 'react';
-import { MapPin, Phone, ArrowRight, Clock, Calendar, Wifi, ShieldCheck, Utensils, Zap, Sparkles, Lock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MapPin, Phone, ArrowRight, Clock, Calendar, Wifi, ShieldCheck, Utensils, Zap, Sparkles, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function PropertyCard({ property, onViewDetails }) {
   const {
@@ -13,55 +13,191 @@ export default function PropertyCard({ property, onViewDetails }) {
     monthlyPrice,
     rent,
     imageUrl,
+    images = [],
     amenities = []
   } = property;
 
+  const allImages = Array.isArray(images) && images.length > 0 ? images : (imageUrl ? [imageUrl] : []);
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const displayedImage = allImages[currentImgIndex] || allImages[0] || '/lampose-logo-splash.png';
   const displayPrice = rent || monthlyPrice || dailyPrice || 0;
   const isDaily = stayType === 'Short Stay' || (category === 'Dormitory' && !monthlyPrice);
 
   // Take top 3 amenities to feature on card
   const topAmenities = amenities.slice(0, 3);
 
+  // Auto-scroll through images every 3.5 seconds (pauses on hover)
+  useEffect(() => {
+    if (allImages.length <= 1 || isHovered) return;
+
+    const interval = setInterval(() => {
+      setCurrentImgIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [allImages.length, isHovered]);
+
+  const handlePrevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImgIndex((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+  };
+
+  const handleNextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImgIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+  };
+
+  const handleDotClick = (e, idx) => {
+    e.stopPropagation();
+    setCurrentImgIndex(idx);
+  };
+
   return (
-    <div className="property-card-wrapper animate-fade-in" style={{
-      display: 'flex',
-      flexDirection: 'column',
-      borderRadius: '20px',
-      overflow: 'hidden',
-      position: 'relative',
-      background: '#ffffff',
-      border: '1px solid #e2e8f0',
-      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.03)',
-      transition: 'all 0.3s ease'
-    }}>
-      {/* Image Banner Box */}
-      <div className="card-image-box" style={{ position: 'relative', height: '195px', overflow: 'hidden' }}>
+    <div 
+      className="property-card-wrapper animate-fade-in" 
+      onClick={onViewDetails}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        position: 'relative',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.03)',
+        transition: 'all 0.3s ease',
+        cursor: 'pointer'
+      }}
+    >
+      {/* Image Banner Box with Interactive Auto-Scroll Carousel */}
+      <div className="card-image-box" style={{ position: 'relative', height: '205px', overflow: 'hidden', background: '#f6f8f6' }}>
         <img
-          className="card-image"
-          src={imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'}
-          alt={name}
+          key={currentImgIndex}
+          className="card-image animate-fade-in"
+          src={displayedImage}
+          alt={`${name} - Photo ${currentImgIndex + 1}`}
           style={{ 
             width: '100%', 
             height: '100%', 
-            objectFit: 'cover',
-            transition: 'transform 0.5s ease'
+            objectFit: displayedImage.includes('splash') || displayedImage.includes('logo') ? 'contain' : 'cover',
+            padding: displayedImage.includes('splash') || displayedImage.includes('logo') ? '16px' : '0',
+            transition: 'all 0.4s ease'
           }}
+          onError={(e) => { e.target.src = '/lampose-logo-splash.png'; }}
         />
 
         {/* Soft Vignette Overlay */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 50%)'
+          background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.05) 50%, transparent 100%)',
+          pointerEvents: 'none'
         }} />
 
-        {/* Category Floating Pill Badge (White background top-left) */}
-        <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 2 }}>
+        {/* Carousel Next & Prev Arrows (When multiple photos exist) */}
+        {allImages.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={handlePrevImage}
+              style={{
+                position: 'absolute',
+                left: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 3,
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.92)',
+                border: 'none',
+                color: '#181e1b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                transition: 'all 0.2s ease'
+              }}
+              title="Previous photo"
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextImage}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 3,
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.92)',
+                border: 'none',
+                color: '#181e1b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                transition: 'all 0.2s ease'
+              }}
+              title="Next photo"
+            >
+              <ChevronRight size={16} />
+            </button>
+
+            {/* Pagination Dots */}
+            <div style={{
+              position: 'absolute',
+              bottom: '10px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'rgba(0, 0, 0, 0.35)',
+              padding: '3px 8px',
+              borderRadius: '12px',
+              backdropFilter: 'blur(4px)'
+            }}>
+              {allImages.map((_, dotIdx) => {
+                const isActive = dotIdx === currentImgIndex;
+                return (
+                  <span
+                    key={dotIdx}
+                    onClick={(e) => handleDotClick(e, dotIdx)}
+                    style={{
+                      width: isActive ? '14px' : '5px',
+                      height: '5px',
+                      borderRadius: '4px',
+                      background: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease'
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* Category Floating Pill Badge (Top-left) */}
+        <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 2 }}>
           <span style={{
             background: '#ffffff',
             color: '#181e1b',
-            padding: '5px 12px',
-            borderRadius: '12px',
+            padding: '4px 10px',
+            borderRadius: '10px',
             fontSize: '0.72rem',
             fontWeight: 700,
             letterSpacing: '0.04em',
@@ -69,21 +205,21 @@ export default function PropertyCard({ property, onViewDetails }) {
             boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '5px'
+            gap: '4px'
           }}>
             <Sparkles size={11} color="#45855a" />
             {category}
           </span>
         </div>
 
-        {/* Stay Type Floating Pill Badge (Dark background top-right) */}
+        {/* Stay Type Floating Pill Badge (Top-right) */}
         {stayType && category !== 'Bachelor Room' && (
-          <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2 }}>
+          <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 2 }}>
             <span style={{
               fontSize: '0.72rem',
               fontWeight: 700,
-              padding: '5px 12px',
-              borderRadius: '12px',
+              padding: '4px 10px',
+              borderRadius: '10px',
               background: '#181e1b',
               color: '#ffffff',
               boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
@@ -91,29 +227,51 @@ export default function PropertyCard({ property, onViewDetails }) {
               alignItems: 'center',
               gap: '4px'
             }}>
-              {stayType.includes('Short') ? <Clock size={12} /> : <Lock size={12} />}
+              {stayType.includes('Short') ? <Clock size={11} /> : <Lock size={11} />}
               {stayType}
             </span>
           </div>
         )}
 
-        {/* Floating Rent Tag (White background bottom-right) */}
+        {/* Multi-Photo Index Badge (Bottom-left) */}
+        {allImages.length > 1 && (
+          <div style={{
+            position: 'absolute',
+            bottom: '10px',
+            left: '10px',
+            zIndex: 2,
+            background: 'rgba(0, 0, 0, 0.65)',
+            color: '#ffffff',
+            padding: '3px 8px',
+            borderRadius: '8px',
+            fontSize: '0.68rem',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px',
+            backdropFilter: 'blur(4px)'
+          }}>
+            <span>📷 {currentImgIndex + 1}/{allImages.length}</span>
+          </div>
+        )}
+
+        {/* Floating Rent Tag (Bottom-right) */}
         <div style={{
           position: 'absolute',
-          bottom: '12px',
-          right: '12px',
+          bottom: '10px',
+          right: '10px',
           zIndex: 2,
           background: '#ffffff',
-          padding: '6px 14px',
-          borderRadius: '14px',
+          padding: '5px 12px',
+          borderRadius: '12px',
           boxShadow: '0 6px 16px rgba(0, 0, 0, 0.15)',
           display: 'flex',
           alignItems: 'baseline',
           gap: '2px'
         }}>
-          <span style={{ fontSize: '0.85rem', color: '#181e1b', fontWeight: 800 }}>₹</span>
-          <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#181e1b', letterSpacing: '-0.02em' }}>{displayPrice}</span>
-          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
+          <span style={{ fontSize: '0.8rem', color: '#181e1b', fontWeight: 800 }}>₹</span>
+          <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#181e1b', letterSpacing: '-0.02em' }}>{displayPrice}</span>
+          <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>
             {isDaily ? '/day' : '/mo'}
           </span>
         </div>
@@ -128,8 +286,7 @@ export default function PropertyCard({ property, onViewDetails }) {
           fontWeight: 800,
           color: '#181e1b',
           marginBottom: '6px',
-          lineHeight: '1.35',
-          fontFamily: "'Outfit', 'Inter', sans-serif"
+          lineHeight: '1.35'
         }}>
           {name}
         </h3>
@@ -147,25 +304,27 @@ export default function PropertyCard({ property, onViewDetails }) {
               <span
                 key={idx}
                 style={{
-                  fontSize: '0.72rem',
-                  padding: '4px 10px',
+                  fontSize: '0.74rem',
+                  padding: '3px 10px',
                   borderRadius: '12px',
-                  background: '#f1f5f2',
-                  border: '1px solid #e2e8f0',
-                  color: '#475569',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
+                  background: '#f0f7f2',
+                  border: '1px solid #c2e2cc',
+                  color: '#45855a',
+                  fontWeight: 600
                 }}
               >
-                <AmenityIcon name={amenity} />
-                <span>{amenity}</span>
+                {amenity}
               </span>
             ))}
+            {amenities.length > 3 && (
+              <span style={{ fontSize: '0.72rem', color: '#64748b', alignSelf: 'center' }}>
+                +{amenities.length - 3} more
+              </span>
+            )}
           </div>
         )}
 
-        {/* Owner Info & Direct Contact */}
+        {/* Footer: Owner Info & CTA */}
         <div style={{
           marginTop: 'auto',
           paddingTop: '12px',
@@ -173,69 +332,36 @@ export default function PropertyCard({ property, onViewDetails }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '14px'
+          gap: '8px'
         }}>
-          <div>
-            <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Owner / Manager</span>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#181e1b' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Owner / Contact</span>
+            <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#181e1b' }}>
               {ownerName}
-            </div>
+            </span>
           </div>
 
-          <a
-            href={`tel:${ownerMobile}`}
-            className="card-phone-link"
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails();
+            }}
+            className="btn btn-secondary"
             style={{
-              padding: '6px 12px',
-              borderRadius: '20px',
-              background: '#eaf3ed',
-              border: '1px solid #c2e2cc',
-              color: '#45855a',
+              padding: '6px 14px',
               fontSize: '0.8rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              textDecoration: 'none',
-              transition: 'all 0.25s ease'
+              borderRadius: '10px',
+              border: '1px solid #cbd5e1',
+              color: '#181e1b',
+              fontWeight: 600,
+              gap: '4px'
             }}
           >
-            <Phone size={13} />
-            <span>Call Owner</span>
-          </a>
+            <span>Details</span>
+            <ArrowRight size={13} />
+          </button>
         </div>
-
-        {/* Clean Secondary Action Button */}
-        <button
-          onClick={() => onViewDetails(property)}
-          className="btn card-action-btn-secondary"
-          style={{
-            width: '100%',
-            padding: '10px',
-            fontSize: '0.88rem',
-            background: '#f8faf8',
-            border: '1px solid #e2e8f0',
-            color: '#181e1b',
-            borderRadius: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'all 0.3s ease',
-            fontWeight: 600
-          }}
-        >
-          <span>View Full Specifications</span>
-          <ArrowRight size={16} className="btn-arrow" style={{ transition: 'transform 0.3s ease' }} />
-        </button>
       </div>
     </div>
   );
-}
-
-function AmenityIcon({ name }) {
-  if (name.includes('WiFi')) return <Wifi size={12} color="#45855a" />;
-  if (name.includes('AC')) return <Zap size={12} color="#45855a" />;
-  if (name.includes('Food')) return <Utensils size={12} color="#45855a" />;
-  return <ShieldCheck size={12} color="#45855a" />;
 }

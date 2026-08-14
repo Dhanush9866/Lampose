@@ -27,6 +27,12 @@ const propertySchema = new mongoose.Schema(
       required: [true, 'Category is required'],
       enum: ['PG', 'Hostel', 'Dormitory', 'Bachelor Room']
     },
+    // Employee / Agent email who onboarded this property
+    employeeEmail: {
+      type: String,
+      default: '',
+      trim: true
+    },
     // Stay Type & Pricing Structure
     stayType: {
       type: String,
@@ -66,6 +72,10 @@ const propertySchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    images: {
+      type: [String],
+      default: []
+    },
     amenities: {
       type: [String],
       default: []
@@ -80,6 +90,6 @@ const propertySchema = new mongoose.Schema(
   }
 );
 
-propertySchema.index({ name: 'text', place: 'text', ownerName: 'text' });
+propertySchema.index({ name: 'text', place: 'text', ownerName: 'text', employeeEmail: 'text' });
 
 module.exports = mongoose.model('Property', propertySchema);
