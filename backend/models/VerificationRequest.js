@@ -19,7 +19,7 @@ const verificationRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'sent', 'delivered', 'failed', 'verified', 'expired'],
+      enum: ['pending', 'sent', 'delivered', 'failed', 'verified', 'expired', 'rejected', 'owner_approved', 'verifier_rejected'],
       default: 'pending',
     },
     contentSid: {
@@ -53,6 +53,15 @@ const verificationRequestSchema = new mongoose.Schema(
     expiresAt: {
       type: Date,
       required: true,
+    },
+    pendingPropertyData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    assignedVerifierMobileE164: {
+      type: String,
+      default: '',
+      trim: true,
     },
   },
   {

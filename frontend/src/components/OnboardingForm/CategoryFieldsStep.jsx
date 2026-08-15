@@ -10,9 +10,17 @@ export default function CategoryFieldsStep({ category, details = {}, onChangeDet
 
   const handleCheckboxArray = (field, item) => {
     const currentArray = Array.isArray(details[field]) ? details[field] : [];
-    const updated = currentArray.includes(item)
-      ? currentArray.filter(i => i !== item)
-      : [...currentArray, item];
+    let updated;
+    if (currentArray.includes(item)) {
+      updated = currentArray.filter(i => i !== item);
+      if (field === 'sharingTypes' && details.sharingPrices) {
+        const updatedPrices = { ...details.sharingPrices };
+        delete updatedPrices[item];
+        onChangeDetails('sharingPrices', updatedPrices);
+      }
+    } else {
+      updated = [...currentArray, item];
+    }
     onChangeDetails(field, updated);
   };
 
@@ -106,6 +114,39 @@ export default function CategoryFieldsStep({ category, details = {}, onChangeDet
                 );
               })}
             </div>
+
+            {/* Sharing Prices (Dynamic based on selected sharing types) */}
+            {Array.isArray(details.sharingTypes) && details.sharingTypes.length > 0 && (
+              <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(0, 0, 0, 0.02)', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                <label className="form-label" style={{ fontSize: '0.85rem', color: '#181e1b', fontWeight: 700, marginBottom: '10px' }}>
+                  Monthly Price for Selected Sharing Options (₹):
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                  {details.sharingTypes.map((type) => {
+                    const currentPrice = details.sharingPrices ? details.sharingPrices[type] : '';
+                    return (
+                      <div key={type} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>{type} Rent *</span>
+                        <input
+                          type="number"
+                          placeholder="e.g. 6000"
+                          value={currentPrice || ''}
+                          onChange={(e) => {
+                            const updatedPrices = {
+                              ...(details.sharingPrices || {}),
+                              [type]: Number(e.target.value) || ''
+                            };
+                            onChangeDetails('sharingPrices', updatedPrices);
+                          }}
+                          className="form-input"
+                          style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* AC Available */}

@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Property = require('../models/Property');
+const VerificationRequest = require('../models/VerificationRequest');
+const crypto = require('crypto');
+const { sendVerificationMessage } = require('../config/twilio');
 const { getIsInMemory, getMemoryStore } = require('../config/db');
 
 const multer = require('multer');
@@ -155,20 +159,30 @@ router.post('/upload-images', upload.array('images', 10), async (req, res) => {
 router.get('/', async (req, res) => {
   const timestamp = new Date().toLocaleTimeString();
   try {
-    const { category, search, place, stayType } = req.query;
+    const { category, search, place, stayType, includeUnverified } = req.query;
     console.log(`\n📋 [${timestamp}] [API GET /properties] Query filters -> category: "${category || 'All'}", search: "${search || 'None'}"`);
 
     if (getIsInMemory()) {
       let filtered = [...inMemoryStore];
+      global.pendingInMemoryProperties = global.pendingInMemoryProperties || [];
+      
+      // Combine active and pending properties
+      let combined = [];
+      if (includeUnverified !== 'true') {
+        combined = [...global.pendingInMemoryProperties, ...filtered];
+      } else {
+        combined = [...filtered];
+      }
+
       if (category && category !== 'All') {
-        filtered = filtered.filter(p => p.category.toLowerCase() === category.toLowerCase());
+        combined = combined.filter(p => p.category.toLowerCase() === category.toLowerCase());
       }
       if (stayType && stayType !== 'All') {
-        filtered = filtered.filter(p => p.stayType && p.stayType.toLowerCase().includes(stayType.toLowerCase()));
+        combined = combined.filter(p => p.stayType && p.stayType.toLowerCase().includes(stayType.toLowerCase()));
       }
       if (search) {
         const q = search.toLowerCase();
-        filtered = filtered.filter(
+        combined = combined.filter(
           p =>
             p.name.toLowerCase().includes(q) ||
             p.place.toLowerCase().includes(q) ||
@@ -176,39 +190,78 @@ router.get('/', async (req, res) => {
         );
       }
 
-      console.log(`   📊 [In-Memory Mode] Returning ${filtered.length} property listing(s)`);
+      console.log(`   📊 [In-Memory Mode] Returning ${combined.length} property listing(s)`);
       return res.json({
         success: true,
-        count: filtered.length,
-        data: filtered
+        count: combined.length,
+        data: combined
       });
     }
 
-    const query = {};
+    // MongoDB Mode
+    // 1. Fetch verified properties
+    const verifiedQuery = { verificationStatus: 'verified' };
     if (category && category !== 'All') {
-      query.category = category;
+      verifiedQuery.category = category;
     }
     if (stayType && stayType !== 'All') {
-      query.stayType = { $regex: stayType, $options: 'i' };
+      verifiedQuery.stayType = { $regex: stayType, $options: 'i' };
     }
     if (place) {
-      query.place = { $regex: place, $options: 'i' };
+      verifiedQuery.place = { $regex: place, $options: 'i' };
     }
     if (search) {
-      query.$or = [
+      verifiedQuery.$or = [
         { name: { $regex: search, $options: 'i' } },
         { place: { $regex: search, $options: 'i' } },
         { ownerName: { $regex: search, $options: 'i' } }
       ];
     }
+    const verifiedProps = await Property.find(verifiedQuery).sort({ createdAt: -1 });
 
-    const properties = await Property.find(query).sort({ createdAt: -1 });
-    console.log(`   📊 [MongoDB Mode] Returning ${properties.length} property listing(s)`);
+    // 2. Fetch pending properties from VerificationRequests
+    let pendingProps = [];
+    if (includeUnverified !== 'true') {
+      const pendingQuery = { status: { $in: ['sent', 'pending', 'failed'] } };
+      const pendingRequests = await VerificationRequest.find(pendingQuery).sort({ createdAt: -1 });
+      
+      pendingProps = pendingRequests
+        .filter(r => r.pendingPropertyData)
+        .map(r => ({
+          ...r.pendingPropertyData,
+          verificationStatus: 'pending',
+          isVerified: false
+        }));
+
+      // Apply query filters to pending properties
+      if (category && category !== 'All') {
+        pendingProps = pendingProps.filter(p => p.category === category);
+      }
+      if (stayType && stayType !== 'All') {
+        pendingProps = pendingProps.filter(p => p.stayType && p.stayType.toLowerCase().includes(stayType.toLowerCase()));
+      }
+      if (place) {
+        pendingProps = pendingProps.filter(p => p.place && p.place.toLowerCase().includes(place.toLowerCase()));
+      }
+      if (search) {
+        const q = search.toLowerCase();
+        pendingProps = pendingProps.filter(
+          p =>
+            p.name.toLowerCase().includes(q) ||
+            p.place.toLowerCase().includes(q) ||
+            p.ownerName.toLowerCase().includes(q)
+        );
+      }
+    }
+
+    // Combine both arrays (pending properties first)
+    const combined = [...pendingProps, ...verifiedProps];
+    console.log(`   📊 [MongoDB Mode] Returning ${combined.length} property listing(s) (${verifiedProps.length} verified, ${pendingProps.length} pending)`);
 
     res.json({
       success: true,
-      count: properties.length,
-      data: properties
+      count: combined.length,
+      data: combined
     });
   } catch (err) {
     console.error(`   ❌ [GET /properties Error]:`, err.message);
@@ -334,32 +387,71 @@ router.post('/', async (req, res) => {
       imageUrl: determinedImages[0] || imageUrl || '/lampose-logo-splash.png',
       images: determinedImages,
       amenities: Array.isArray(amenities) ? amenities : [],
-      categoryDetails: categoryDetails || {}
+      categoryDetails: categoryDetails || {},
+      isVerified: false,
+      verificationStatus: 'pending'
     };
 
+    let propertyId;
+    let property;
+
     if (getIsInMemory()) {
-      const createdItem = {
-        _id: 'prop_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      propertyId = 'prop_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      property = {
+        _id: propertyId,
         ...newPropertyData,
         createdAt: new Date().toISOString()
       };
-      inMemoryStore.unshift(createdItem);
-      console.log(`   ✅ [In-Memory Success] Property created with ID: ${createdItem._id}`);
-      console.log(`========================================================================\n`);
-      return res.status(201).json({
-        success: true,
-        message: 'Property onboarded successfully!',
-        data: createdItem
-      });
+      console.log(`   ✅ [In-Memory Pending] Property prepared with ID: ${propertyId}`);
+    } else {
+      propertyId = new mongoose.Types.ObjectId();
+      property = {
+        _id: propertyId,
+        ...newPropertyData
+      };
+      console.log(`   ✅ [MongoDB Pending] Property prepared with virtual ID: ${propertyId}`);
     }
 
-    const property = await Property.create(newPropertyData);
-    console.log(`   ✅ [MongoDB Success] Saved to database! Document ID: ${property._id}`);
+    // Trigger Twilio WhatsApp Verification
+    console.log(`   💬 [Twilio Verification] Sending verification WhatsApp to owner mobile: ${ownerMobile}...`);
+    const twilioResult = await sendVerificationMessage(ownerMobile, ownerName, name);
+
+    // Create Verification Request
+    const { formatWhatsAppNumber } = require('../config/twilio');
+    const ownerMobileE164 = formatWhatsAppNumber(ownerMobile) || ownerMobile;
+    const token = crypto.randomBytes(16).toString('hex');
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+
+    const verificationPayload = {
+      property: getIsInMemory() ? undefined : propertyId,
+      ownerMobileE164,
+      token,
+      status: twilioResult.success ? 'sent' : 'failed',
+      lastError: twilioResult.success ? '' : (twilioResult.error || 'Twilio send failed'),
+      attempts: 1,
+      sentAt: twilioResult.success ? new Date() : null,
+      expiresAt,
+      pendingPropertyData: property
+    };
+
+    if (!getIsInMemory()) {
+      try {
+        await VerificationRequest.create(verificationPayload);
+        console.log(`   ✅ [Verification Created] Document saved in DB with pendingPropertyData.`);
+      } catch (dbErr) {
+        console.error(`   ❌ [Verification DB Error]: Failed to save verification request:`, dbErr.message);
+      }
+    } else {
+      global.pendingInMemoryProperties = global.pendingInMemoryProperties || [];
+      global.pendingInMemoryProperties.push(property);
+      console.log(`   ℹ️ [In-Memory Mode] Verification request simulation:`, verificationPayload);
+    }
+
     console.log(`========================================================================\n`);
 
     res.status(201).json({
       success: true,
-      message: 'Property onboarded successfully!',
+      message: 'Property onboarding submitted! A verification request has been sent to the owner.',
       data: property
     });
   } catch (err) {

@@ -471,7 +471,17 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
                 <>
                   <SpecItem label="Food Status" value={categoryDetails.foodIncluded ? `Provided (${categoryDetails.foodType || 'Veg/Non-Veg'})` : 'No Food'} />
                   <SpecItem label="AC Available" value={categoryDetails.acAvailable ? 'Yes (AC Rooms)' : 'Non-AC Only'} />
-                  <SpecItem label="Sharing Types" value={Array.isArray(categoryDetails.sharingTypes) ? categoryDetails.sharingTypes.join(', ') : 'Single, 2 Sharing'} />
+                  <SpecItem 
+                    label="Sharing Types & Prices" 
+                    value={
+                      Array.isArray(categoryDetails.sharingTypes) && categoryDetails.sharingTypes.length > 0
+                        ? categoryDetails.sharingTypes.map(type => {
+                            const price = categoryDetails.sharingPrices ? categoryDetails.sharingPrices[type] : null;
+                            return price ? `${type}: ₹${price}/mo` : type;
+                          }).join(', ')
+                        : 'Single, 2 Sharing'
+                    } 
+                  />
                   <SpecItem label="Curfew Timing" value={categoryDetails.curfewTime || 'No Curfew'} />
                   <SpecItem label="Housekeeping" value={categoryDetails.housekeeping ? 'Daily Included' : 'Standard'} />
                 </>
