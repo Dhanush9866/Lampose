@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const { connectDB } = require('./config/db');
-const { corsOptions, allowedOrigins } = require('./config/cors');
+const { createCorsOptions } = require('./config/cors');
 const propertyRoutes = require('./routes/propertyRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const statsRoutes = require('./routes/statsRoutes');
@@ -13,6 +13,31 @@ const verificationRoutes = require('./routes/verificationRoutes');
 const permissionRoutes = require('./routes/permissionRoutes');
 
 const app = express();
+
+/**
+ * CORS ORIGIN ALLOWLIST
+ *
+ * Browser origins permitted to call this API. Add a deployed front end by
+ * adding its domain here (scheme + host, no trailing path), or per environment
+ * through CORS_ALLOWED_ORIGINS="https://a.com,https://b.com" in .env.
+ */
+const ALLOWED_ORIGINS = [
+  'https://onboard.lampose.com', // Employee onboarding app
+  'https://lampose.com',
+  'https://www.lampose.com',
+
+  // Local Vite dev servers — dropped automatically when NODE_ENV=production
+  ...(process.env.NODE_ENV === 'production'
+    ? []
+    : [
+        'http://localhost:5173', // Onboarding app
+        'http://localhost:5174', // Admin console
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:5174',
+      ]),
+];
+
+const { corsOptions, allowedOrigins } = createCorsOptions(ALLOWED_ORIGINS);
 
 // Global Request Logger Middleware
 app.use((req, res, next) => {

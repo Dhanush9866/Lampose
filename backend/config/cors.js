@@ -1,71 +1,59 @@
 /**
- * CORS allowlist.
+ * CORS matching for the API.
  *
- * The API is no longer open to every origin: only the Lampose front ends may
- * call it from a browser. Extra origins can be added per environment through
- * `CORS_ALLOWED_ORIGINS` (comma separated) without touching this file, which is
- * how staging or preview hosts get in.
+ * The allowlist itself lives in `server.js`, so the domains that may call this
+ * API are visible in one obvious place. This module only decides whether a
+ * given Origin is on that list.
  */
 
 /** Compare on the origin alone — scheme + host + port, no trailing slash, no case. */
 const normalize = (origin) => String(origin || '').trim().replace(/\/+$/, '').toLowerCase();
 
-// Deployed front ends.
-const PRODUCTION_ORIGINS = [
-  'https://onboard.lampose.com', // Employee onboarding app
-  'https://lampose.com',
-  'https://www.lampose.com',
-];
+/**
+ * Build the options object for the `cors` middleware.
+ *
+ * @param {string[]} origins Allowed browser origins, declared in server.js.
+ * Extra origins can be added per environment through `CORS_ALLOWED_ORIGINS`
+ * (comma separated), which is how staging or preview hosts get in without a
+ * code change.
+ */
+const createCorsOptions = (origins = []) => {
+  const envOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(normalize)
+    .filter(Boolean);
 
-// Vite dev servers — the onboarding app and the admin console.
-const DEVELOPMENT_ORIGINS = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:5174',
-];
+  const allowedOrigins = [...new Set([...origins.map(normalize), ...envOrigins])];
 
-const envOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
-  .split(',')
-  .map(normalize)
-  .filter(Boolean);
+  const corsOptions = {
+    origin(origin, callback) {
+      // Same-origin requests, curl, and server-to-server calls such as the
+      // Twilio webhooks send no Origin header. CORS is a browser control, so
+      // those are never what it protects against — let them through untouched.
+      if (!origin) return callback(null, true);
 
-const isProduction = process.env.NODE_ENV === 'production';
+      if (allowedOrigins.includes(normalize(origin))) return callback(null, true);
 
-const allowedOrigins = [
-  ...new Set([
-    ...PRODUCTION_ORIGINS.map(normalize),
-    ...envOrigins,
-    ...(isProduction ? [] : DEVELOPMENT_ORIGINS.map(normalize)),
-  ]),
-];
+      // Answer without the CORS headers rather than throwing: the browser
+      // blocks the response either way, and the server log stays readable.
+      console.warn(`🚫 [CORS Blocked] Origin "${origin}" is not on the allowlist.`);
+      return callback(null, false);
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-Correlation-ID',
+      'x-employee-email', // Identifies the field agent on gated writes
+      'x-user-email',
+    ],
+    credentials: true,
+    maxAge: 86400, // Cache the preflight for a day
+    optionsSuccessStatus: 204,
+  };
 
-const corsOptions = {
-  origin(origin, callback) {
-    // Same-origin requests, curl, and server-to-server calls such as the Twilio
-    // webhooks send no Origin header. CORS is a browser control, so those are
-    // never the thing it protects against — let them through untouched.
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(normalize(origin))) return callback(null, true);
-
-    // Answer without the CORS headers rather than throwing: the browser blocks
-    // the response either way, and the server log stays readable.
-    console.warn(`🚫 [CORS Blocked] Origin "${origin}" is not on the allowlist.`);
-    return callback(null, false);
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'Accept',
-    'X-Correlation-ID',
-    'x-employee-email', // Identifies the field agent on gated writes
-    'x-user-email',
-  ],
-  credentials: true,
-  maxAge: 86400, // Cache the preflight for a day
-  optionsSuccessStatus: 204,
+  return { corsOptions, allowedOrigins };
 };
 
-module.exports = { corsOptions, allowedOrigins };
+module.exports = { createCorsOptions, normalize };
