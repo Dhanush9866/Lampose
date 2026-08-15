@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, ArrowRight, PlusCircle, Building2, MapPin, User, Phone } from 'lucide-react';
+import { Clock, ArrowRight, PlusCircle, MapPin } from 'lucide-react';
 
 export default function FormSuccessModal({ property, onViewListings, onResetForm }) {
   if (!property) return null;
@@ -35,34 +35,36 @@ export default function FormSuccessModal({ property, onViewListings, onResetForm
         border: '1px solid #e2e8f0',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
       }}>
-        {/* Success Animated Badge */}
+        {/* Pending Clock Badge */}
         <div style={{
           width: '64px',
           height: '64px',
           borderRadius: '50%',
-          background: '#eaf3ed',
-          border: '2px solid #45855a',
+          background: '#fef3c7',
+          border: '2px solid #d97706',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           margin: '0 auto 16px',
-          color: '#45855a'
+          color: '#d97706'
         }}>
-          <CheckCircle2 size={36} />
+          <Clock size={36} className="animate-pulse" />
         </div>
 
         <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#181e1b', marginBottom: '6px' }}>
-          Property Onboarded Successfully!
+          Onboarding Request Submitted!
         </h2>
-        <p style={{ fontSize: '0.88rem', color: '#64748b', marginBottom: '20px' }}>
-          Your accommodation listing has been saved directly to MongoDB Atlas and is now live!
+        <p style={{ fontSize: '0.88rem', color: '#64748b', marginBottom: '20px', lineHeight: '1.4' }}>
+          A verification WhatsApp message has been sent to the owner <strong style={{ color: '#181e1b' }}>{ownerName}</strong> at <strong style={{ color: '#181e1b' }}>{ownerMobile}</strong>. 
+          <br />
+          <span style={{ color: '#d97706', fontWeight: 700 }}>Waiting for Owner approval...</span> The property will be listed live on Lampose only after they reply with <strong style={{ color: '#181e1b' }}>YES</strong>.
         </p>
 
         {/* Property Brief Summary Box */}
         <div style={{
           padding: '16px',
           borderRadius: '16px',
-          background: '#f8faf8',
+          background: '#fafaf9',
           border: '1px solid #e2e8f0',
           textAlign: 'left',
           marginBottom: '24px',
@@ -71,23 +73,23 @@ export default function FormSuccessModal({ property, onViewListings, onResetForm
           gap: '8px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '10px', background: '#45855a', color: '#ffffff' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '10px', background: '#d97706', color: '#ffffff' }}>
               {category} {stayType ? `• ${stayType}` : ''}
             </span>
-            <span style={{ fontSize: '1rem', fontWeight: 800, color: '#45855a' }}>
-              ₹{displayPrice} {stayType === 'Short Stay' ? '/day' : '/mo'}
+            <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#d97706' }}>
+              Pending Approval
             </span>
           </div>
 
           <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#181e1b' }}>{name}</h4>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: '#64748b' }}>
-            <MapPin size={14} color="#45855a" />
+            <MapPin size={14} color="#d97706" />
             <span>{place}</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.8rem', color: '#64748b', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
-            <span><strong style={{ color: '#181e1b' }}>Owner:</strong> {ownerName}</span>
+            <span><strong style={{ color: '#181e1b' }}>Price:</strong> ₹{displayPrice} {stayType === 'Short Stay' ? '/day' : '/mo'}</span>
             <span><strong style={{ color: '#181e1b' }}>Contact:</strong> {ownerMobile}</span>
           </div>
         </div>
@@ -99,7 +101,7 @@ export default function FormSuccessModal({ property, onViewListings, onResetForm
             className="btn btn-primary"
             style={{ padding: '12px 24px', background: '#45855a' }}
           >
-            <span>View Live Listings</span>
+            <span>Go to Listings</span>
             <ArrowRight size={16} />
           </button>
 

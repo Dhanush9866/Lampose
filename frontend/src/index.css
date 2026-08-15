@@ -488,4 +488,12 @@ body {
     grid-template-columns: 1fr !important;
     gap: 8px !important;
   }
+
+  .nav-btn-text {
+    display: none !important;
+  }
+
+  .user-badge-name {
+    display: none !important;
+  }
 }

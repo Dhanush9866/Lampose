@@ -83,6 +83,15 @@ const propertySchema = new mongoose.Schema(
     categoryDetails: {
       type: mongoose.Schema.Types.Mixed,
       default: {}
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: 'pending'
     }
   },
   {

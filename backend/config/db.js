@@ -8,7 +8,7 @@ const connectDB = async () => {
   try {
     mongoose.set('strictQuery', false);
     const conn = await mongoose.connect(connStr, {
-      serverSelectionTimeoutMS: 2500 // Quick timeout to fallback if MongoDB daemon isn't active locally
+      serverSelectionTimeoutMS: 8000 // Timeout to fallback if MongoDB daemon isn't active
     });
     console.log(`[MongoDB Connected]: ${conn.connection.host}`);
     return true;

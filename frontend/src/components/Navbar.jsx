@@ -40,9 +40,9 @@ export default function Navbar({ activeTab, setActiveTab, user, onOpenAuthModal,
             }}
           >
             <LayoutGrid size={16} />
-            <span>Explore</span>
+            <span className="nav-btn-text">Explore</span>
           </button>
-
+ 
           <button
             onClick={() => setActiveTab('onboard')}
             className="nav-btn nav-btn-primary"
@@ -51,9 +51,9 @@ export default function Navbar({ activeTab, setActiveTab, user, onOpenAuthModal,
             }}
           >
             <PlusCircle size={16} />
-            <span>Onboard</span>
+            <span className="nav-btn-text">Onboard</span>
           </button>
-
+ 
           {/* User Auth Section */}
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
@@ -85,7 +85,7 @@ export default function Navbar({ activeTab, setActiveTab, user, onOpenAuthModal,
                 }}>
                   {user.name ? user.name[0].toUpperCase() : 'U'}
                 </div>
-                <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span className="user-badge-name" style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {user.name || 'User'}
                 </span>
               </div>

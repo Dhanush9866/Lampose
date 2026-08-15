@@ -80,10 +80,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && activeTab === 'listings') {
       loadData();
     }
-  }, [user]);
+  }, [user, activeTab]);
 
   // When employee logs in, attach employeeEmail (keep ownerName and ownerMobile clean for actual landlord/owner)
   useEffect(() => {
@@ -166,13 +166,34 @@ export default function App() {
 
   // Handle Category Details Field Changes
   const handleCategoryDetailChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      categoryDetails: {
+    setFormData(prev => {
+      const updatedDetails = {
         ...prev.categoryDetails,
         [field]: value
+      };
+
+      const extraFields = {};
+      if (field === 'sharingPrices' || field === 'sharingTypes') {
+        const prices = Object.values(updatedDetails.sharingPrices || {})
+          .map(Number)
+          .filter(p => !isNaN(p) && p > 0);
+        
+        if (prices.length > 0) {
+          const minPrice = Math.min(...prices);
+          extraFields.monthlyPrice = minPrice;
+          extraFields.rent = minPrice;
+        } else {
+          extraFields.monthlyPrice = '';
+          extraFields.rent = '';
+        }
       }
-    }));
+
+      return {
+        ...prev,
+        categoryDetails: updatedDetails,
+        ...extraFields
+      };
+    });
   };
 
   // Form Validation
@@ -191,6 +212,25 @@ export default function App() {
     const errs = validateForm();
     if (Object.keys(errs).length > 0) {
       setFormErrors(errs);
+
+      // Map error fields to element IDs for scrolling
+      const idMap = {
+        name: 'propertyName',
+        place: 'propertyPlace',
+        ownerName: 'ownerName',
+        ownerMobile: 'ownerMobile'
+      };
+
+      const firstErrorField = Object.keys(errs)[0];
+      const targetId = idMap[firstErrorField];
+      if (targetId) {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Focus the input directly so the user can start correcting it
+          el.focus({ preventScroll: true });
+        }
+      }
       return;
     }
 
@@ -290,7 +330,8 @@ export default function App() {
 
       if (response && response.success) {
         console.log('✅ [Onboarding Success] Saved property:', response.data);
-        setRecentlyOnboarded(response.data);
+        // Redirect directly to Listings page and reload
+        setActiveTab('listings');
         const activeEmpEmail = user?.email || getSavedEmployeeEmail() || '';
         setFormData({
           ...INITIAL_FORM_STATE,

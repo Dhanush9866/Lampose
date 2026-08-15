@@ -14,7 +14,9 @@ export default function PropertyCard({ property, onViewDetails }) {
     rent,
     imageUrl,
     images = [],
-    amenities = []
+    amenities = [],
+    verificationStatus,
+    isVerified
   } = property;
 
   const allImages = Array.isArray(images) && images.length > 0 ? images : (imageUrl ? [imageUrl] : []);
@@ -212,25 +214,46 @@ export default function PropertyCard({ property, onViewDetails }) {
           </span>
         </div>
 
-        {/* Stay Type Floating Pill Badge (Top-right) */}
-        {stayType && category !== 'Bachelor Room' && (
+        {/* Stay Type or Pending Status Badge (Top-right) */}
+        {verificationStatus === 'pending' ? (
           <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 2 }}>
             <span style={{
               fontSize: '0.72rem',
-              fontWeight: 700,
+              fontWeight: 800,
               padding: '4px 10px',
               borderRadius: '10px',
-              background: '#181e1b',
+              background: '#d97706',
               color: '#ffffff',
               boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
+              textTransform: 'uppercase'
             }}>
-              {stayType.includes('Short') ? <Clock size={11} /> : <Lock size={11} />}
-              {stayType}
+              <Clock size={11} className="animate-pulse" />
+              Pending
             </span>
           </div>
+        ) : (
+          stayType && category !== 'Bachelor Room' && (
+            <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 2 }}>
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                padding: '4px 10px',
+                borderRadius: '10px',
+                background: '#181e1b',
+                color: '#ffffff',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                {stayType.includes('Short') ? <Clock size={11} /> : <Lock size={11} />}
+                {stayType}
+              </span>
+            </div>
+          )
         )}
 
         {/* Multi-Photo Index Badge (Bottom-left) */}

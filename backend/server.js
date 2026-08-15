@@ -38,6 +38,7 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin', statsRoutes);
 app.use('/api/verifications', verificationRoutes);
+app.use('/api/whatsapp', verificationRoutes);
 
 // Health check endpoint — reports real database connectivity, not a static "ok".
 app.get('/api/health', (req, res) => {
@@ -75,3 +76,6 @@ connectDB().then(() => {
     console.log(`==================================================\n`);
   });
 });
+
+// Watch reloader trigger
+
