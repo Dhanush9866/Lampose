@@ -127,6 +127,38 @@ export interface VerificationEntity {
   } | null;
 }
 
+export type PermissionAction = 'edit' | 'delete';
+
+export type PermissionStatus = 'pending' | 'granted' | 'denied' | 'revoked' | 'used';
+
+/**
+ * An employee's request for edit or delete rights on a listing —
+ * `permissionrequests` collection. Field agents hold no standing write access,
+ * so each attempt is recorded here and decided by an administrator.
+ */
+export interface PermissionEntity {
+  id: string;
+  propertyRef: string;
+  propertyName: string;
+  propertyPlace: string;
+  propertyCategory: string;
+  ownerName: string;
+  ownerMobile: string;
+  employeeEmail: string;
+  action: PermissionAction;
+  reason: string;
+  status: PermissionStatus;
+  /** True while the grant is approved, unspent and unexpired. */
+  active: boolean;
+  decidedBy: string;
+  decidedAt: string | null;
+  usedAt: string | null;
+  expiresAt: string | null;
+  requestedIp: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
 /** A `{ label, count }` bucket returned by the stats aggregations. */
 export interface CountBucket {
   label: string;

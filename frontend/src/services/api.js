@@ -1,8 +1,30 @@
 import axios from 'axios';
+import { getCurrentUser, getSavedEmployeeEmail } from './auth.js';
 
-const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) 
-  || (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) 
+const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
+  || (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL)
   || 'http://localhost:5000/api/properties';
+
+/** Root of the API (…/api), derived from the properties endpoint. */
+export const API_ROOT = API_BASE_URL.replace(/\/properties\/?$/, '');
+
+/**
+ * Identifies the signed-in employee on every write. The backend refuses an
+ * edit or delete carrying this header unless an administrator has granted that
+ * employee permission for that listing.
+ */
+export const employeeHeaders = () => {
+  const email = getCurrentUser()?.email || getSavedEmployeeEmail() || '';
+  return email ? { 'x-employee-email': email } : {};
+};
+
+/** Prefer the server's own explanation over a generic transport message. */
+const readError = (error) => {
+  if (error.response && error.response.data) {
+    return { success: false, ...error.response.data };
+  }
+  return { success: false, error: error.message };
+};
 
 export const fetchProperties = async (params = {}) => {
   try {
@@ -36,11 +58,20 @@ export const onboardProperty = async (propertyData) => {
   }
 };
 
-export const deleteProperty = async (id) => {
+export const updateProperty = async (id, changes) => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/${id}`);
+    const response = await axios.put(`${API_BASE_URL}/${id}`, changes, { headers: employeeHeaders() });
     return response.data;
   } catch (error) {
-    return { success: false, error: error.message };
+    return readError(error);
+  }
+};
+
+export const deleteProperty = async (id) => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/${id}`, { headers: employeeHeaders() });
+    return response.data;
+  } catch (error) {
+    return readError(error);
   }
 };

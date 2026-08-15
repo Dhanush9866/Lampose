@@ -3,18 +3,28 @@ import {
   CheckCircle2,
   Clock,
   Hourglass,
+  KeyRound,
+  Lock,
   MailCheck,
+  Pencil,
   Send,
   ShieldAlert,
   ShieldCheck,
   ShieldX,
   TimerOff,
+  Trash2,
   UserCog,
   XCircle,
 } from 'lucide-react';
 import type { ElementType } from 'react';
 import type { BadgeTone } from '../components/ui';
-import type { AdminRole, AdminStatus, VerificationStatus } from '../api/types';
+import type {
+  AdminRole,
+  AdminStatus,
+  PermissionAction,
+  PermissionStatus,
+  VerificationStatus,
+} from '../api/types';
 
 /** One place where a domain value becomes a tone + icon, so status reads the
  *  same on every page and never relies on colour alone. */
@@ -38,6 +48,40 @@ export const verificationMeta = (status: string) =>
     label: status || 'Unknown',
     chartColor: 'var(--chart-neutral)',
   };
+
+export const PERMISSION_STATUS_META: Record<
+  PermissionStatus,
+  { tone: BadgeTone; icon: ElementType; label: string }
+> = {
+  pending: { tone: 'warn', icon: Hourglass, label: 'Awaiting decision' },
+  granted: { tone: 'good', icon: KeyRound, label: 'Granted' },
+  denied: { tone: 'crit', icon: ShieldX, label: 'Denied' },
+  revoked: { tone: 'crit', icon: ShieldX, label: 'Revoked' },
+  used: { tone: 'neutral', icon: Lock, label: 'Spent' },
+};
+
+export const permissionStatusMeta = (status: string) =>
+  PERMISSION_STATUS_META[status as PermissionStatus] ?? {
+    tone: 'neutral' as BadgeTone,
+    icon: ShieldAlert,
+    label: status || 'Unknown',
+  };
+
+export const PERMISSION_ACTION_META: Record<
+  PermissionAction,
+  { tone: BadgeTone; icon: ElementType; label: string }
+> = {
+  edit: { tone: 'brand', icon: Pencil, label: 'Edit listing' },
+  delete: { tone: 'crit', icon: Trash2, label: 'Delete listing' },
+};
+
+export const PERMISSION_STATUSES: PermissionStatus[] = [
+  'pending',
+  'granted',
+  'denied',
+  'revoked',
+  'used',
+];
 
 export const ADMIN_STATUS_META: Record<
   AdminStatus,

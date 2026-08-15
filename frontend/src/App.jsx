@@ -36,8 +36,16 @@ const INITIAL_FORM_STATE = {
   categoryDetails: {
     foodIncluded: true,
     foodType: 'Both (Veg & Non-Veg)',
+    mealsProvided: ['Breakfast', 'Lunch', 'Dinner'],
+    mealTimings: {
+      Breakfast: '7:30 AM - 9:30 AM',
+      Lunch: '12:30 PM - 2:30 PM',
+      Dinner: '8:00 PM - 10:00 PM'
+    },
     sharingTypes: ['Single', '2 Sharing'],
-    acAvailable: true,
+    sharingPrices: {},
+    sharingAC: {},
+    sharingAcPrices: {},
     curfewTime: '10:30 PM',
     housekeeping: true
   }
@@ -123,8 +131,16 @@ export default function App() {
       defaultCategoryDetails = {
         foodIncluded: true,
         foodType: 'Both (Veg & Non-Veg)',
+        mealsProvided: ['Breakfast', 'Lunch', 'Dinner'],
+        mealTimings: {
+          Breakfast: '7:30 AM - 9:30 AM',
+          Lunch: '12:30 PM - 2:30 PM',
+          Dinner: '8:00 PM - 10:00 PM'
+        },
         sharingTypes: ['Single', '2 Sharing'],
-        acAvailable: true,
+        sharingPrices: {},
+        sharingAC: {},
+        sharingAcPrices: {},
         curfewTime: '10:30 PM',
         housekeeping: true
       };
@@ -173,11 +189,14 @@ export default function App() {
       };
 
       const extraFields = {};
-      if (field === 'sharingPrices' || field === 'sharingTypes') {
-        const prices = Object.values(updatedDetails.sharingPrices || {})
-          .map(Number)
+      if (['sharingPrices', 'sharingAcPrices', 'sharingTypes'].includes(field)) {
+        // The headline rent is the cheapest way into the property, across both
+        // the non-AC and AC rate of every sharing option still selected.
+        const selectedTypes = Array.isArray(updatedDetails.sharingTypes) ? updatedDetails.sharingTypes : [];
+        const prices = [updatedDetails.sharingPrices, updatedDetails.sharingAcPrices]
+          .flatMap(priceMap => selectedTypes.map(type => Number((priceMap || {})[type])))
           .filter(p => !isNaN(p) && p > 0);
-        
+
         if (prices.length > 0) {
           const minPrice = Math.min(...prices);
           extraFields.monthlyPrice = minPrice;
@@ -352,12 +371,22 @@ export default function App() {
     }
   };
 
-  // Handle Delete
+  // Handle Delete — the response is returned so the caller can surface a refusal
+  // (the backend rejects an employee delete without an approved permission).
   const handleDeleteProperty = async (id) => {
     const res = await deleteProperty(id);
     if (res && res.success) {
       setProperties(prev => prev.filter(p => p._id !== id));
+      setActiveModalProperty(null);
     }
+    return res;
+  };
+
+  // Handle an approved edit landing — keep the grid and the open modal in step
+  const handlePropertyUpdated = (updated) => {
+    if (!updated || !updated._id) return;
+    setProperties(prev => prev.map(p => (p._id === updated._id ? { ...p, ...updated } : p)));
+    setActiveModalProperty(prev => (prev && prev._id === updated._id ? { ...prev, ...updated } : prev));
   };
 
   // If user is not logged in, display full-screen Login Screen first
@@ -641,6 +670,7 @@ export default function App() {
           property={activeModalProperty}
           onClose={() => setActiveModalProperty(null)}
           onDelete={handleDeleteProperty}
+          onUpdated={handlePropertyUpdated}
         />
       )}
     </div>

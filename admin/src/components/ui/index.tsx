@@ -259,6 +259,56 @@ export const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (
   </select>
 );
 
+interface SwitchProps {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  /** Names what the switch controls — required, since the track carries no text. */
+  label: string;
+  disabled?: boolean;
+  busy?: boolean;
+  tone?: 'brand' | 'good';
+  className?: string;
+}
+
+/**
+ * A two-state toggle for a decision that takes effect on flip. The knob shifts
+ * and the track changes colour together, so state never rests on colour alone.
+ */
+export const Switch: React.FC<SwitchProps> = ({
+  checked,
+  onChange,
+  label,
+  disabled,
+  busy,
+  tone = 'good',
+  className,
+}) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    aria-label={label}
+    title={label}
+    disabled={disabled || busy}
+    onClick={() => onChange(!checked)}
+    className={cx(
+      'relative inline-flex items-center h-5 w-9 rounded-full shrink-0 transition-colors duration-120',
+      'disabled:opacity-50 disabled:cursor-not-allowed',
+      checked ? (tone === 'good' ? 'bg-good' : 'bg-brand') : 'bg-line-strong',
+      className
+    )}
+  >
+    <span
+      className={cx(
+        'grid place-items-center size-4 rounded-full bg-white shadow-[var(--shadow-sm)] transition-transform duration-120',
+        checked ? 'translate-x-[18px]' : 'translate-x-0.5'
+      )}
+    >
+      {busy && <Loader2 className="size-2.5 animate-spin text-ink-3" strokeWidth={2.5} />}
+    </span>
+  </button>
+);
+
 interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ElementType;
 }

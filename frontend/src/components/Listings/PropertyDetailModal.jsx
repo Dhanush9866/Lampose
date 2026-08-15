@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, User, Phone, ShieldCheck, Trash2, CheckCircle2, Clock, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  X, MapPin, User, Phone, ShieldCheck, Trash2, CheckCircle2, Clock, Calendar,
+  ChevronLeft, ChevronRight, Pencil, Lock, KeyRound, Loader2, Hourglass, ShieldX, Save
+} from 'lucide-react';
+import { fetchPropertyAccess, requestPermission, activeEmployeeEmail } from '../../services/permissions.js';
+import { updateProperty } from '../../services/api.js';
 
-export default function PropertyDetailModal({ property, onClose, onDelete }) {
+/** How a permission state reads to the employee holding the locked button. */
+const PERMISSION_NOTES = {
+  none: { icon: Lock, color: '#64748b', text: 'Locked — ask an administrator for access' },
+  pending: { icon: Hourglass, color: '#b45309', text: 'Requested — awaiting administrator approval' },
+  granted: { icon: CheckCircle2, color: '#45855a', text: 'Approved by administrator' },
+  denied: { icon: ShieldX, color: '#dc2626', text: 'Administrator denied this request' },
+  revoked: { icon: ShieldX, color: '#dc2626', text: 'Access was revoked by an administrator' },
+  used: { icon: Lock, color: '#64748b', text: 'Approval already used — ask again if you need it' },
+};
+
+export default function PropertyDetailModal({ property, onClose, onDelete, onUpdated }) {
   if (!property) return null;
 
   const {
@@ -33,8 +48,98 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
   const [touchStartX, setTouchStartX] = useState(null);
   const [isBannerHovered, setIsBannerHovered] = useState(false);
 
+  // Edit and delete are administrator-granted, never assumed. `access` holds the
+  // decision on record for this employee and this listing.
+  const [access, setAccess] = useState(null);
+  const [accessLoading, setAccessLoading] = useState(true);
+  const [askAction, setAskAction] = useState(null); // 'edit' | 'delete' while the ask panel is open
+  const [askReason, setAskReason] = useState('');
+  const [asking, setAsking] = useState(false);
+  const [notice, setNotice] = useState(null); // { tone: 'good' | 'bad', text }
+  const [isEditing, setIsEditing] = useState(false);
+  const [busyAction, setBusyAction] = useState(null); // 'edit' | 'delete' while a write is in flight
+
+  // The signed-in field agent, as distinct from `employeeEmail` above, which
+  // records whoever originally onboarded the listing.
+  const currentEmployeeEmail = activeEmployeeEmail();
+
+  const loadAccess = async () => {
+    const res = await fetchPropertyAccess(_id);
+    setAccess(res && res.success ? res.data.permissions : null);
+    setAccessLoading(false);
+  };
+
+  useEffect(() => {
+    setAccessLoading(true);
+    loadAccess();
+  }, [_id]);
+
+  const permissionFor = (action) => access?.[action] || { allowed: false, status: 'none' };
+
+  const handleAskPermission = async (e) => {
+    e.preventDefault();
+    setAsking(true);
+    const res = await requestPermission({ property, action: askAction, reason: askReason });
+    setAsking(false);
+
+    if (res && res.success) {
+      setNotice({
+        tone: 'good',
+        text: res.message || 'Permission request sent to the administrator.'
+      });
+      setAskAction(null);
+      setAskReason('');
+      loadAccess();
+    } else {
+      setNotice({ tone: 'bad', text: res?.error || res?.message || 'Could not send the request.' });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    if (!window.confirm(`Delete "${name}"? This uses your approved permission and cannot be undone.`)) return;
+
+    setBusyAction('delete');
+    const res = await onDelete(_id);
+    setBusyAction(null);
+
+    if (res && res.success) {
+      onClose();
+    } else {
+      setNotice({ tone: 'bad', text: res?.error || res?.message || 'Delete failed.' });
+      loadAccess();
+    }
+  };
+
+  const handleSaveEdit = async (changes) => {
+    setBusyAction('edit');
+    const res = await updateProperty(_id, changes);
+    setBusyAction(null);
+
+    if (res && res.success) {
+      setIsEditing(false);
+      setNotice({ tone: 'good', text: 'Listing updated. Your edit permission is now closed.' });
+      loadAccess();
+      if (onUpdated) onUpdated(res.data);
+    } else {
+      setNotice({ tone: 'bad', text: res?.error || res?.message || 'Update failed.' });
+      loadAccess();
+    }
+  };
+
   const currentImage = allImages[activeImageIndex] || allImages[0] || '/lampose-logo-splash.png';
   const isSplashImage = currentImage?.includes('splash') || currentImage?.includes('logo');
+
+  // AC is recorded per sharing option now; listings onboarded before that carry
+  // a single property-wide flag, so both shapes have to read sensibly.
+  const acSharingTypes = Object.entries(categoryDetails.sharingAC || {})
+    .filter(([, enabled]) => enabled)
+    .map(([type]) => type);
+  const acSummary = acSharingTypes.length > 0
+    ? `Yes — ${acSharingTypes.join(', ')}`
+    : categoryDetails.sharingAC
+      ? 'Non-AC Only'
+      : (categoryDetails.acAvailable ? 'Yes (AC Rooms)' : 'Non-AC Only');
 
   const badgeClass =
     category === 'PG' ? 'badge-pg' :
@@ -70,12 +175,20 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
       } else if (e.key === 'ArrowRight') {
         handleNext();
       } else if (e.key === 'Escape') {
-        onClose();
+        // Escape backs out of the edit form or the permission request first,
+        // so a half-typed request is never lost with the whole window.
+        if (isEditing) {
+          if (busyAction !== 'edit') setIsEditing(false);
+        } else if (askAction) {
+          setAskAction(null);
+        } else {
+          onClose();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [allImages.length]);
+  }, [allImages.length, isEditing, askAction, busyAction]);
 
   // Touch swipe handling for mobile devices
   const handleTouchStart = (e) => {
@@ -470,17 +583,48 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
               {category === 'PG' && (
                 <>
                   <SpecItem label="Food Status" value={categoryDetails.foodIncluded ? `Provided (${categoryDetails.foodType || 'Veg/Non-Veg'})` : 'No Food'} />
-                  <SpecItem label="AC Available" value={categoryDetails.acAvailable ? 'Yes (AC Rooms)' : 'Non-AC Only'} />
-                  <SpecItem 
-                    label="Sharing Types & Prices" 
+
+                  {categoryDetails.foodIncluded && (
+                    <SpecItem
+                      label="Meals & Serving Timings"
+                      value={
+                        Array.isArray(categoryDetails.mealsProvided) && categoryDetails.mealsProvided.length > 0
+                          ? categoryDetails.mealsProvided.map((meal) => (
+                              <span key={meal} style={{ display: 'block' }}>
+                                {meal}
+                                <span style={{ fontWeight: 500, color: '#64748b' }}>
+                                  {' — '}{(categoryDetails.mealTimings || {})[meal] || 'Timing not stated'}
+                                </span>
+                              </span>
+                            ))
+                          : 'Meals not specified'
+                      }
+                    />
+                  )}
+
+                  <SpecItem label="AC Available" value={acSummary} />
+                  <SpecItem
+                    label="Sharing Types & Prices"
                     value={
                       Array.isArray(categoryDetails.sharingTypes) && categoryDetails.sharingTypes.length > 0
-                        ? categoryDetails.sharingTypes.map(type => {
+                        ? categoryDetails.sharingTypes.map((type) => {
                             const price = categoryDetails.sharingPrices ? categoryDetails.sharingPrices[type] : null;
-                            return price ? `${type}: ₹${price}/mo` : type;
-                          }).join(', ')
+                            const hasAC = !!(categoryDetails.sharingAC && categoryDetails.sharingAC[type]);
+                            const acPrice = categoryDetails.sharingAcPrices ? categoryDetails.sharingAcPrices[type] : null;
+                            return (
+                              <span key={type} style={{ display: 'block' }}>
+                                {type}
+                                {price ? `: ₹${price}/mo` : ''}
+                                {hasAC && (
+                                  <span style={{ fontWeight: 600, color: '#45855a' }}>
+                                    {acPrice ? ` · AC ₹${acPrice}/mo` : ' · AC available'}
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          })
                         : 'Single, 2 Sharing'
-                    } 
+                    }
                   />
                   <SpecItem label="Curfew Timing" value={categoryDetails.curfewTime || 'No Curfew'} />
                   <SpecItem label="Housekeeping" value={categoryDetails.housekeeping ? 'Daily Included' : 'Standard'} />
@@ -553,36 +697,400 @@ export default function PropertyDetailModal({ property, onClose, onDelete }) {
             </div>
           )}
 
-          {/* Footer Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '16px', borderTop: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '10px' }}>
-            {onDelete && (
+          {/* Footer Actions — edit and delete stay locked until an administrator approves */}
+          <div style={{ paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+              <Lock size={14} color="#64748b" />
+              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
+                Restricted actions — administrator permission required
+              </span>
+            </div>
+
+            {notice && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '12px',
+                marginBottom: '12px',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                background: notice.tone === 'good' ? '#eaf3ed' : '#fef2f2',
+                border: `1px solid ${notice.tone === 'good' ? '#c2e2cc' : '#fecaca'}`,
+                color: notice.tone === 'good' ? '#2f6b45' : '#dc2626'
+              }}>
+                {notice.text}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <RestrictedAction
+                icon={Pencil}
+                label="Edit Listing"
+                tone="edit"
+                permission={permissionFor('edit')}
+                loading={accessLoading}
+                busy={busyAction === 'edit'}
+                onClick={() => { setNotice(null); setIsEditing(true); }}
+              />
+
+              <RestrictedAction
+                icon={Trash2}
+                label="Delete Listing"
+                tone="delete"
+                permission={permissionFor('delete')}
+                loading={accessLoading}
+                busy={busyAction === 'delete'}
+                onClick={handleDelete}
+              />
+
               <button
-                onClick={() => onDelete(_id)}
+                type="button"
+                onClick={() => {
+                  setNotice(null);
+                  setAskReason('');
+                  setAskAction(askAction ? null : (permissionFor('edit').allowed ? 'delete' : 'edit'));
+                }}
                 style={{
-                  padding: '8px 16px',
+                  padding: '9px 16px',
                   borderRadius: '10px',
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  color: '#dc2626',
+                  background: askAction ? '#181e1b' : '#eaf3ed',
+                  border: `1px solid ${askAction ? '#181e1b' : '#c2e2cc'}`,
+                  color: askAction ? '#ffffff' : '#2f6b45',
                   fontSize: '0.85rem',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px'
                 }}
               >
-                <Trash2 size={16} />
-                <span>Delete Listing</span>
+                <KeyRound size={16} />
+                <span>{askAction ? 'Cancel Request' : 'Ask Permission'}</span>
               </button>
-            )}
 
-            <button onClick={onClose} className="btn" style={{ padding: '10px 24px', background: '#181e1b', color: '#ffffff', borderRadius: '12px' }}>
-              Close Window
-            </button>
+              <button
+                onClick={onClose}
+                className="btn"
+                style={{ marginLeft: 'auto', padding: '10px 24px', background: '#181e1b', color: '#ffffff', borderRadius: '12px' }}
+              >
+                Close Window
+              </button>
+            </div>
+
+            {/* Ask Permission — the request an administrator will act on */}
+            {askAction && (
+              <form
+                onSubmit={handleAskPermission}
+                style={{
+                  marginTop: '14px',
+                  padding: '16px',
+                  borderRadius: '16px',
+                  background: '#f8faf8',
+                  border: '1px solid #c2e2cc'
+                }}
+              >
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#181e1b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <KeyRound size={16} color="#45855a" />
+                  <span>Request administrator permission</span>
+                </h4>
+                <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: '12px' }}>
+                  Requesting as <strong style={{ color: '#45855a' }}>{currentEmployeeEmail || 'unknown employee'}</strong>.
+                  The request is recorded and reviewed in the admin console.
+                </p>
+
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  {[
+                    { value: 'edit', label: 'Edit this listing', icon: Pencil },
+                    { value: 'delete', label: 'Delete this listing', icon: Trash2 }
+                  ].map(({ value, label, icon: OptionIcon }) => {
+                    const isSelected = askAction === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setAskAction(value)}
+                        style={{
+                          flex: '1 1 180px',
+                          padding: '10px 14px',
+                          borderRadius: '12px',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          background: isSelected ? '#eaf3ed' : '#ffffff',
+                          border: `2px solid ${isSelected ? '#45855a' : '#e2e8f0'}`,
+                          color: '#181e1b',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <OptionIcon size={16} color={isSelected ? '#45855a' : '#64748b'} />
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>
+                  Reason for the request
+                </label>
+                <textarea
+                  value={askReason}
+                  onChange={(e) => setAskReason(e.target.value)}
+                  rows={2}
+                  maxLength={500}
+                  placeholder={askAction === 'delete'
+                    ? 'e.g. Owner has withdrawn the property from the platform.'
+                    : 'e.g. Owner changed the monthly rent and contact number.'}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0',
+                    fontSize: '0.85rem',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
+                  }}
+                />
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setAskAction(null)}
+                    style={{ padding: '9px 18px', borderRadius: '10px', background: '#ffffff', border: '1px solid #e2e8f0', color: '#64748b', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={asking || !currentEmployeeEmail}
+                    className="btn btn-primary"
+                    style={{ padding: '9px 20px', background: '#45855a', borderRadius: '10px', fontSize: '0.85rem', opacity: asking || !currentEmployeeEmail ? 0.6 : 1 }}
+                  >
+                    {asking ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
+                    <span>{asking ? 'Sending…' : 'Send Request'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Edit form — reachable only while an approved edit permission is open */}
+      {isEditing && (
+        <EditPropertyPanel
+          property={property}
+          saving={busyAction === 'edit'}
+          onCancel={() => setIsEditing(false)}
+          onSave={handleSaveEdit}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * An action the employee cannot take on their own authority. The button is
+ * always visible — so it is obvious what the listing supports — but stays
+ * disabled until an administrator's grant is on record, and the line beneath
+ * says exactly where the request stands.
+ */
+function RestrictedAction({ icon: Icon, label, tone, permission, loading, busy, onClick }) {
+  const allowed = !loading && permission.allowed;
+  const note = PERMISSION_NOTES[permission.status] || PERMISSION_NOTES.none;
+  const NoteIcon = note.icon;
+
+  const palette = tone === 'delete'
+    ? { bg: '#fef2f2', border: '#fecaca', text: '#dc2626' }
+    : { bg: '#eef4ff', border: '#c7d7fe', text: '#2952b3' };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={!allowed || busy}
+        title={allowed ? label : `${label} — ${note.text}`}
+        style={{
+          padding: '9px 16px',
+          borderRadius: '10px',
+          background: allowed ? palette.bg : '#f1f5f9',
+          border: `1px solid ${allowed ? palette.border : '#e2e8f0'}`,
+          color: allowed ? palette.text : '#94a3b8',
+          fontSize: '0.85rem',
+          fontWeight: 700,
+          cursor: allowed && !busy ? 'pointer' : 'not-allowed',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}
+      >
+        {busy
+          ? <Loader2 size={16} className="animate-spin" />
+          : allowed ? <Icon size={16} /> : <Lock size={16} />}
+        <span>{label}</span>
+      </button>
+
+      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', fontWeight: 600, color: loading ? '#94a3b8' : note.color }}>
+        {loading ? <Loader2 size={11} className="animate-spin" /> : <NoteIcon size={11} />}
+        <span>{loading ? 'Checking access…' : note.text}</span>
+      </span>
+    </div>
+  );
+}
+
+const editInputStyle = {
+  width: '100%',
+  padding: '10px 12px',
+  borderRadius: '10px',
+  border: '1px solid #e2e8f0',
+  fontSize: '0.88rem',
+  fontFamily: 'inherit'
+};
+
+// Declared at module level: a component defined inside the form would be a new
+// type on every keystroke, remounting each input and dropping focus.
+function Labelled({ label, children }) {
+  return (
+    <label style={{ display: 'block' }}>
+      <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: 600, marginBottom: '4px' }}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+/** The editable subset of a listing — the fields a field agent corrects in practice. */
+function EditPropertyPanel({ property, saving, onCancel, onSave }) {
+  const [form, setForm] = useState({
+    name: property.name || '',
+    place: property.place || '',
+    address: property.address || '',
+    ownerName: property.ownerName || '',
+    ownerMobile: property.ownerMobile || '',
+    monthlyPrice: property.monthlyPrice ?? '',
+    dailyPrice: property.dailyPrice ?? '',
+    deposit: property.deposit ?? ''
+  });
+
+  const setField = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const monthlyPrice = Number(form.monthlyPrice) || 0;
+    const dailyPrice = Number(form.dailyPrice) || 0;
+
+    onSave({
+      name: form.name.trim(),
+      place: form.place.trim(),
+      address: form.address.trim(),
+      ownerName: form.ownerName.trim(),
+      ownerMobile: form.ownerMobile.trim(),
+      monthlyPrice,
+      dailyPrice,
+      deposit: Number(form.deposit) || 0,
+      // `rent` is the field the listings and admin figures read, so it tracks
+      // whichever price the listing is actually sold on.
+      rent: monthlyPrice || dailyPrice || Number(property.rent) || 0
+    });
+  };
+
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget && !saving) onCancel(); }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10001,
+        background: 'rgba(0, 0, 0, 0.55)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px 14px',
+        overflowY: 'auto'
+      }}
+      className="animate-fade-in"
+    >
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          maxWidth: '560px',
+          width: '100%',
+          maxHeight: 'calc(100vh - 40px)',
+          overflowY: 'auto',
+          background: '#ffffff',
+          borderRadius: '20px',
+          border: '1px solid #e2e8f0',
+          padding: '24px 22px',
+          margin: 'auto',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)'
+        }}
+      >
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#181e1b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Pencil size={18} color="#45855a" />
+          <span>Edit Listing</span>
+        </h3>
+        <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px', marginBottom: '18px' }}>
+          Saving spends your approved edit permission — you will need a new approval for the next change.
+        </p>
+
+        <div style={{ display: 'grid', gap: '12px' }}>
+          <Labelled label="Property Name">
+            <input value={form.name} onChange={setField('name')} required style={editInputStyle} />
+          </Labelled>
+
+          <Labelled label="Place / Location">
+            <input value={form.place} onChange={setField('place')} required style={editInputStyle} />
+          </Labelled>
+
+          <Labelled label="Street Address">
+            <input value={form.address} onChange={setField('address')} style={editInputStyle} />
+          </Labelled>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+            <Labelled label="Owner Name">
+              <input value={form.ownerName} onChange={setField('ownerName')} required style={editInputStyle} />
+            </Labelled>
+            <Labelled label="Owner Mobile">
+              <input value={form.ownerMobile} onChange={setField('ownerMobile')} required style={editInputStyle} />
+            </Labelled>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+            <Labelled label="Monthly Price (₹)">
+              <input type="number" min="0" value={form.monthlyPrice} onChange={setField('monthlyPrice')} style={editInputStyle} />
+            </Labelled>
+            <Labelled label="Daily Price (₹)">
+              <input type="number" min="0" value={form.dailyPrice} onChange={setField('dailyPrice')} style={editInputStyle} />
+            </Labelled>
+            <Labelled label="Deposit (₹)">
+              <input type="number" min="0" value={form.deposit} onChange={setField('deposit')} style={editInputStyle} />
+            </Labelled>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            style={{ padding: '10px 20px', borderRadius: '10px', background: '#ffffff', border: '1px solid #e2e8f0', color: '#64748b', fontWeight: 600, fontSize: '0.88rem', cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="btn btn-primary"
+            style={{ padding: '10px 22px', background: '#45855a', borderRadius: '10px', fontSize: '0.88rem', opacity: saving ? 0.6 : 1 }}
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            <span>{saving ? 'Saving…' : 'Save Changes'}</span>
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
