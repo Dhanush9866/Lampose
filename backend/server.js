@@ -5,10 +5,12 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const { connectDB } = require('./config/db');
+const { corsOptions, allowedOrigins } = require('./config/cors');
 const propertyRoutes = require('./routes/propertyRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
+const permissionRoutes = require('./routes/permissionRoutes');
 
 const app = express();
 
@@ -28,8 +30,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware
-app.use(cors());
+// Middleware — browser traffic is restricted to the allowlisted front ends
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
@@ -39,6 +42,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin', statsRoutes);
 app.use('/api/verifications', verificationRoutes);
 app.use('/api/whatsapp', verificationRoutes);
+app.use('/api/permissions', permissionRoutes);
 
 // Health check endpoint — reports real database connectivity, not a static "ok".
 app.get('/api/health', (req, res) => {
@@ -73,6 +77,12 @@ connectDB().then(() => {
     console.log(`   - POST   /api/properties`);
     console.log(`   - GET    /api/properties/:id`);
     console.log(`   - DELETE /api/properties/:id`);
+    console.log(`   - GET    /api/permissions`);
+    console.log(`   - GET    /api/permissions/access`);
+    console.log(`   - POST   /api/permissions`);
+    console.log(`   - PUT    /api/permissions/:id`);
+    console.log(`🌍 CORS allowed origins:`);
+    allowedOrigins.forEach((origin) => console.log(`   - ${origin}`));
     console.log(`==================================================\n`);
   });
 });

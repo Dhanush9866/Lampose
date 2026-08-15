@@ -7,11 +7,13 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { UsersPage } from './pages/UsersPage';
 import { PropertiesPage } from './pages/PropertiesPage';
 import { VerificationsPage } from './pages/VerificationsPage';
+import { PermissionsPage } from './pages/PermissionsPage';
 import { SystemPage } from './pages/SystemPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { insightsService } from './api/services/insightsService';
+import { permissionService } from './api/services/permissionService';
 import { useFetch } from './lib/useFetch';
 
 const VALID_TABS = [
@@ -19,6 +21,7 @@ const VALID_TABS = [
   'analytics',
   'properties',
   'verifications',
+  'permissions',
   'users',
   'system',
   'settings',
@@ -53,6 +56,13 @@ const AppContent: React.FC = () => {
 
   const stats = useFetch(() => insightsService.getStats(30), [isAuthenticated]);
 
+  // The nav badge counts requests still waiting on a decision — the number an
+  // administrator has to act on, not the size of the audit trail.
+  const openPermissions = useFetch(
+    () => permissionService.getPermissions({ status: 'pending' }),
+    [isAuthenticated, activeTab]
+  );
+
   if (!isAuthenticated) {
     return authView === 'register' ? (
       <RegisterPage onSwitchToLogin={() => setAuthView('login')} />
@@ -61,13 +71,14 @@ const AppContent: React.FC = () => {
     );
   }
 
-  const navCounts: Record<string, number> = stats.data
-    ? {
-        properties: stats.data.properties.total,
-        verifications: stats.data.verifications.total,
-        users: stats.data.admins.total,
-      }
-    : {};
+  const navCounts: Record<string, number> = {
+    ...(stats.data && {
+      properties: stats.data.properties.total,
+      verifications: stats.data.verifications.total,
+      users: stats.data.admins.total,
+    }),
+    ...(openPermissions.data && { permissions: openPermissions.data.length }),
+  };
 
   const renderPage = () => {
     switch (activeTab) {
@@ -77,6 +88,8 @@ const AppContent: React.FC = () => {
         return <PropertiesPage search={search} />;
       case 'verifications':
         return <VerificationsPage search={search} />;
+      case 'permissions':
+        return <PermissionsPage search={search} />;
       case 'users':
         return <UsersPage search={search} />;
       case 'system':

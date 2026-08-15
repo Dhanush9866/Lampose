@@ -3,6 +3,7 @@ import {
   BarChart3,
   Building2,
   ChevronsLeft,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   Server,
@@ -38,6 +39,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: 'properties', label: 'Properties', icon: Building2 },
       { id: 'verifications', label: 'Verifications', icon: ShieldCheck },
+      { id: 'permissions', label: 'Permissions', icon: KeyRound },
       { id: 'users', label: 'Administrators', icon: Users },
     ],
   },

@@ -6,6 +6,7 @@ const VerificationRequest = require('../models/VerificationRequest');
 const crypto = require('crypto');
 const { sendVerificationMessage } = require('../config/twilio');
 const { getIsInMemory, getMemoryStore } = require('../config/db');
+const permissionStore = require('../services/permissionStore');
 
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
@@ -19,6 +20,34 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 } // 15MB limit
 });
+
+/**
+ * Gate a destructive write behind an administrator's approval.
+ *
+ * The onboarding app identifies itself with `x-employee-email` on every edit
+ * and delete; such a call is refused unless an administrator has granted that
+ * exact employee permission for that exact listing. Requests without the header
+ * come from the admin console, which is already behind an administrator login,
+ * so they pass through. The grant is returned so the caller can close it once
+ * the write actually lands.
+ */
+const authorizeEmployeeWrite = async (req, action, propertyId) => {
+  const employeeEmail = permissionStore.normalizeEmail(req.headers['x-employee-email']);
+  if (!employeeEmail) return { allowed: true, grant: null, employeeEmail: '' };
+
+  const grant = await permissionStore.findActiveGrant(String(propertyId), employeeEmail, action);
+  if (!grant) {
+    console.warn(`   🚫 [Permission Denied] "${employeeEmail}" has no active ${action} grant for ${propertyId}`);
+    return {
+      allowed: false,
+      employeeEmail,
+      message: `You do not have permission to ${action} this listing. Use "Ask Permission" and wait for an administrator to approve the request.`,
+    };
+  }
+
+  console.log(`   🔓 [Permission Verified] Grant ${grant._id} authorises "${employeeEmail}" to ${action} ${propertyId}`);
+  return { allowed: true, grant, employeeEmail };
+};
 
 // @route   POST /api/properties/upload-image
 // @desc    Upload single image to Cloudinary and return secure URL
@@ -472,6 +501,11 @@ router.put('/:id', async (req, res) => {
   console.log(`\n✏️  [${timestamp}] [API PUT /properties/${id}] Updating property...`);
 
   try {
+    const gate = await authorizeEmployeeWrite(req, 'edit', id);
+    if (!gate.allowed) {
+      return res.status(403).json({ success: false, error: gate.message, requiresPermission: true, action: 'edit' });
+    }
+
     if (getIsInMemory()) {
       const index = inMemoryStore.findIndex(p => p._id === id);
       if (index === -1) {
@@ -479,6 +513,7 @@ router.put('/:id', async (req, res) => {
       }
       inMemoryStore[index] = { ...inMemoryStore[index], ...req.body, updatedAt: new Date().toISOString() };
       console.log(`   ✅ [In-Memory Updated] Property ID: ${id}`);
+      if (gate.grant) await permissionStore.markUsed(gate.grant._id);
       return res.json({ success: true, message: 'Property updated successfully', data: inMemoryStore[index] });
     }
 
@@ -487,6 +522,7 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Property not found' });
     }
     console.log(`   ✅ [MongoDB Updated] Property ID: ${id}`);
+    if (gate.grant) await permissionStore.markUsed(gate.grant._id);
     res.json({ success: true, message: 'Property updated successfully', data: property });
   } catch (err) {
     console.error(`   ❌ [PUT /properties/${id} Error]:`, err.message);
@@ -502,6 +538,11 @@ router.delete('/:id', async (req, res) => {
   console.log(`\n🗑️  [${timestamp}] [API DELETE /properties/${id}] Deleting property...`);
 
   try {
+    const gate = await authorizeEmployeeWrite(req, 'delete', id);
+    if (!gate.allowed) {
+      return res.status(403).json({ success: false, error: gate.message, requiresPermission: true, action: 'delete' });
+    }
+
     if (getIsInMemory()) {
       const index = inMemoryStore.findIndex(p => p._id === id);
       if (index === -1) {
@@ -509,6 +550,7 @@ router.delete('/:id', async (req, res) => {
       }
       const deleted = inMemoryStore.splice(index, 1);
       console.log(`   ✅ [In-Memory Deleted] Property ID: ${id} ("${deleted[0].name}")`);
+      if (gate.grant) await permissionStore.markUsed(gate.grant._id);
       return res.json({ success: true, message: 'Property deleted successfully', data: deleted[0] });
     }
 
@@ -517,6 +559,7 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Property not found' });
     }
     console.log(`   ✅ [MongoDB Deleted] Property ID: ${id} ("${property.name}")`);
+    if (gate.grant) await permissionStore.markUsed(gate.grant._id);
     res.json({ success: true, message: 'Property deleted successfully', data: property });
   } catch (err) {
     console.error(`   ❌ [DELETE /properties/${id} Error]:`, err.message);
