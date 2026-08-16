@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import {
   CheckCircle2,
-  Link2,
   LogOut,
   Monitor,
   Moon,
   Palette,
-  RotateCcw,
-  Save,
   Server,
   Sun,
   UserRound,
@@ -27,7 +24,7 @@ import {
   type ToastState,
 } from '../components/ui';
 import { Avatar } from '../components/layout/Avatar';
-import { DEFAULT_BASE_URL, getBaseUrl, setBaseUrl } from '../api/axiosInstance';
+import { API_BASE_URL } from '../api/axiosInstance';
 import { insightsService } from '../api/services/insightsService';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -38,34 +35,12 @@ export const SettingsPage: React.FC = () => {
   const { user, logout, token } = useAuth();
   const { theme, setTheme } = useTheme();
 
-  const [baseUrl, setBaseUrlValue] = useState(getBaseUrl());
-  const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const [testing, setTesting] = useState(false);
   const [probe, setProbe] = useState<{ ok: boolean; health: HealthEntity | null; message: string } | null>(
     null
   );
-
-  const isOverridden = getBaseUrl() !== DEFAULT_BASE_URL;
-  const dirty = baseUrl.trim() !== getBaseUrl();
-
-  const handleSaveEndpoint = (e: React.FormEvent) => {
-    e.preventDefault();
-    setBaseUrl(baseUrl.trim());
-    setBaseUrlValue(getBaseUrl());
-    setSaved(true);
-    setProbe(null);
-    setToast({ tone: 'good', message: 'API endpoint updated. Subsequent requests use the new host.' });
-    setTimeout(() => setSaved(false), 2500);
-  };
-
-  const handleReset = () => {
-    setBaseUrl(null);
-    setBaseUrlValue(getBaseUrl());
-    setProbe(null);
-    setToast({ tone: 'good', message: 'Reverted to the build-time endpoint.' });
-  };
 
   const handleTest = async () => {
     setTesting(true);
@@ -161,30 +136,21 @@ export const SettingsPage: React.FC = () => {
       <Card>
         <CardHeader
           title="API endpoint"
-          description="Where this console sends every request"
+          description="Where this console sends every request (configured via environment variable)"
           icon={Server}
-          action={
-            isOverridden ? (
-              <Badge tone="warn" icon={Link2}>
-                Overridden
-              </Badge>
-            ) : (
-              <Badge tone="neutral">Build default</Badge>
-            )
-          }
+          action={<Badge tone="neutral">Environment (.env)</Badge>}
         />
 
-        <form onSubmit={handleSaveEndpoint} className="mt-4 space-y-4">
+        <div className="mt-4 space-y-4">
           <Field
             label="Base URL"
-            hint={`Stored in this browser. Build-time value: ${DEFAULT_BASE_URL}`}
+            hint="Set via VITE_API_BASE_URL in .env"
           >
             <Input
-              value={baseUrl}
-              onChange={(e) => setBaseUrlValue(e.target.value)}
-              placeholder={DEFAULT_BASE_URL}
-              className="font-mono"
-              spellCheck={false}
+              value={API_BASE_URL}
+              readOnly
+              disabled
+              className="font-mono bg-surface-inset cursor-not-allowed opacity-85"
             />
           </Field>
 
@@ -216,19 +182,11 @@ export const SettingsPage: React.FC = () => {
           )}
 
           <div className="flex items-center justify-end gap-2">
-            {isOverridden && (
-              <Button type="button" variant="ghost" icon={RotateCcw} onClick={handleReset}>
-                Reset to default
-              </Button>
-            )}
             <Button type="button" variant="secondary" loading={testing} onClick={handleTest}>
               Test connection
             </Button>
-            <Button type="submit" variant="primary" icon={saved ? CheckCircle2 : Save} disabled={!dirty}>
-              {saved ? 'Saved' : 'Save endpoint'}
-            </Button>
           </div>
-        </form>
+        </div>
       </Card>
 
       <Toast toast={toast} onDismiss={() => setToast(null)} />

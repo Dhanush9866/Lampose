@@ -1,5 +1,4 @@
 import { api } from '../apiCaller';
-import { axiosInstance } from '../axiosInstance';
 import type {
   ActivityEntity,
   ApiResponse,
@@ -34,34 +33,34 @@ export const insightsService = {
    */
   async getHealth(): Promise<ApiResponse<HealthEntity | null>> {
     const start = performance.now();
-    try {
-      const response = await axiosInstance.get<HealthEntity>('/health');
+    const res = await api.get<HealthEntity>('/health');
+    const latencyMs = Math.round(performance.now() - start);
+
+    if (res.success && res.data) {
       return {
-        data: { ...response.data, latencyMs: Math.round(performance.now() - start) },
-        status: response.status,
-        success: true,
-        message: 'Success',
-        timestamp: new Date().toISOString(),
+        ...res,
+        data: { ...res.data, latencyMs },
       };
-    } catch (error: any) {
-      // A 503 still carries a usable body — the API is up but the database is not.
-      const body = error?.data;
-      if (body?.database) {
-        return {
-          data: { ...body, latencyMs: Math.round(performance.now() - start) },
-          status: error?.status || 503,
-          success: false,
-          message: 'Backend reachable but degraded.',
-          timestamp: new Date().toISOString(),
-        };
-      }
+    }
+
+    // A 503 still carries a usable body — the API is up but the database is not.
+    const body = res.data as any;
+    if (body?.database) {
       return {
-        data: null,
-        status: error?.status || 0,
+        data: { ...body, latencyMs },
+        status: res.status || 503,
         success: false,
-        message: error?.message || 'Backend unreachable.',
+        message: 'Backend reachable but degraded.',
         timestamp: new Date().toISOString(),
       };
     }
+
+    return {
+      data: null,
+      status: res.status || 0,
+      success: false,
+      message: res.message || 'Backend unreachable.',
+      timestamp: new Date().toISOString(),
+    };
   },
 };

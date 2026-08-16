@@ -1,31 +1,20 @@
 import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiError } from './types';
 
-/** Value compiled in at build time. */
-export const DEFAULT_BASE_URL =
+/** API Base URL read exclusively from environment configuration (.env) */
+export const API_BASE_URL: string =
   (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:5001/api';
 
-export const BASE_URL_OVERRIDE_KEY = 'admin_api_base_url';
+/** Backward compatibility alias for API Base URL */
+export const DEFAULT_BASE_URL = API_BASE_URL;
 
-/** The override set on the Settings page wins over the build-time value. */
-export const getBaseUrl = (): string =>
-  localStorage.getItem(BASE_URL_OVERRIDE_KEY) || DEFAULT_BASE_URL;
-
-/** Point the shared client at a different API host without a page reload. */
-export const setBaseUrl = (url: string | null): void => {
-  if (url && url.trim() && url.trim() !== DEFAULT_BASE_URL) {
-    localStorage.setItem(BASE_URL_OVERRIDE_KEY, url.trim());
-  } else {
-    localStorage.removeItem(BASE_URL_OVERRIDE_KEY);
-  }
-  axiosInstance.defaults.baseURL = getBaseUrl();
-};
+export const getBaseUrl = (): string => API_BASE_URL;
 
 /**
  * Centralized Axios Instance setup
  */
 export const axiosInstance: AxiosInstance = axios.create({
-  baseURL: getBaseUrl(),
+  baseURL: API_BASE_URL,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
